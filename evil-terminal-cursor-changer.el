@@ -7,11 +7,11 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.9"))
-;; Last-Updated: Wed Apr 23 19:40:57 2014 (+0900)
+;; Last-Updated: Wed Apr 23 19:49:37 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 266
+;;     Update #: 268
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
-;; Doc URL:
+;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
 ;; Compatibility: GNU Emacs: 24.x
 ;;
@@ -28,7 +28,7 @@
 ;;
 ;;      (setq etcc--gnome-profile "Profile0")
 ;;
-;; If want change cursor type, add below line.
+;; If want change cursor type, add below line. This is evil's setting.
 ;;
 ;;      (setq evil-visual-state-cursor 'box) ; █
 ;;      (setq evil-insert-state-cursor 'bar) ; ⎸
