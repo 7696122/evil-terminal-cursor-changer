@@ -6,7 +6,7 @@
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
-;; Package-Requires: ((evil "1.0.9"))
+;; Package-Requires: ((evil "1.0.8"))
 ;; Last-Updated: Wed Apr 23 19:49:37 2014 (+0900)
 ;;           By: 7696122
 ;;     Update #: 268
