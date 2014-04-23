@@ -3,16 +3,16 @@
 ;; Filename: evil-terminal-cursor-changer.el
 ;; Description: Change cursor by evil state on terminal.
 ;; Author: 7696122
-;; Maintainer:
+;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
-;; Version:
-;; Package-Requires: ()
-;; Last-Updated: Wed Apr 23 16:00:38 2014 (+0900)
+;; Version: 0.0.1
+;; Package-Requires: ((evil "1.0.9"))
+;; Last-Updated: Wed Apr 23 18:32:49 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 144
-;; URL:
+;;     Update #: 227
+;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL:
-;; Keywords:
+;; Keywords: evil, terminal, cursor
 ;; Compatibility:
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,114 +48,137 @@
 ;;; Code:
 
 
+(require 'evil)
+
+(defcustom etcc--gnome-profile "Default"
+  "The gnome-terminal's profile."
+  :group 'evil-terminal-cursor-chnager)
+
 ;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
 ;; http://unix.stackexchange.com/questions/3759/how-to-stop-cursor-from-blinking
 ;; http://www.joinc.co.kr/modules/moniwiki/wiki.php/man/1/echo
 ;; http://vim.wikia.com/wiki/Change_cursor_shape_in_different_modes
-(defvar box-cursor-string "\e]50;CursorShape=0\x7")
-(defvar bar-cursor-string "\e]50;CursorShape=1\x7")
-(defvar hbar-cursor-string "\e]50;CursorShape=2\x7")
-(defvar tmux-box-cursor-string "\ePtmux;\e\e]50;CursorShape=0\x7\e\\")
-(defvar tmux-bar-cursor-string "\ePtmux;\e\e]50;CursorShape=1\x7\e\\")
-(defvar tmux-hbar-cursor-string "\ePtmux;\e\e]50;CursorShape=2\x7\e\\")
-(defvar gnome-terminal-bar-cursor-string
-  "gconftool-2 --type string --set /apps/gnome-terminal/profiles/Profile0/cursor_shape ibeam")
-(defvar gnome-terminal-box-cursor-string
-  "gconftool-2 --type string --set /apps/gnome-terminal/profiles/Profile0/cursor_shape block")
-(defvar gnome-terminal-hbar-cursor-string
-  "gconftool-2 --type string --set /apps/gnome-terminal/profiles/Profile0/cursor_shape underline")
-
+;; \<Esc>]50;CursorShape=0\x7
 ;; konsole
 ;; "\e]50;CursorShape=2\x7"
 ;; "\e]50;CursorShape=1\x7"
 ;; "\e]50;CursorShape=0\x7"
 ;; (send-string-to-terminal "\e]50;CursorShape=2\x7")
+(defvar etcc--box-cursor-string "\e]50;CursorShape=0\x7"
+  "The cursor type box(block) on iTerm.")
 
-(defun is-iterm ()
+(defvar etcc--bar-cursor-string "\e]50;CursorShape=1\x7"
+  "The cursor type bar(ibeam) on iTerm.")
+
+(defvar etcc--hbar-cursor-string "\e]50;CursorShape=2\x7"
+  "The cursor type hbar(underline) on iTerm.")
+
+(defvar etcc--tmux-box-cursor-string
+  (concat "\ePtmux;\e" etcc--box-cursor-string "\e\\")
+  "The cursor type box(block) on iTerm and tmux.")
+
+(defvar etcc--tmux-bar-cursor-string
+  (concat "\ePtmux;\e" etcc--bar-cursor-string "\e\\")
+  "The cursor type bar(ibeam) on iTerm and tmux.")
+
+(defvar etcc--tmux-hbar-cursor-string
+  (concat "\ePtmux;\e" etcc--hbar-cursor-string "\e\\")
+  "The cursor type hbar(underline) on iTerm and tmux.")
+
+(defvar etcc--gnome-terminal-bar-cursor-string
+  (concat "gconftool-2 --type string "
+          "--set /apps/gnome-terminal/profiles/" etcc--gnome-profile
+          "/cursor_shape ibeam")
+  "The cursor type bar(ibeam) on gnome-terminal.")
+
+(defvar etcc--gnome-terminal-box-cursor-string
+  (concat "gconftool-2 --type string "
+          "--set /apps/gnome-terminal/"
+          etcc--gnome-profile
+          "/Profile0/cursor_shape block")
+  "The cursor type box(block) on gnome-terminal.")
+
+(defvar etcc--gnome-terminal-hbar-cursor-string
+  (concat "gconftool-2 --type string "
+          "--set /apps/gnome-terminal/profiles/"
+          etcc--gnome-profile
+          "/cursor_shape " "underline")
+  "The cursor type hbar(underline) on gnome-terminal.")
+
+(defun etcc--is-iterm ()
   "Running on iTerm."
   (string= (getenv "TERM_PROGRAM") "iTerm.app"))
 
-(defun is-gnome-terminal ()
+(defun etcc--is-gnome-terminal ()
   "Running on gnome-terminal."
   (string= (getenv "COLORTERM") "gnome-terminal"))
 
-(defun is-tmux ()
+(defun etcc--is-tmux ()
   "Running on tmux."
-  (if (getenv "TMUX")
-      t
-    nil))
+  (if (getenv "TMUX") t nil))
 
-(defun set-bar-cursor ()
+(defun etcc--set-bar-cursor ()
   "Set cursor type bar(ibeam)."
-  (if (is-iterm)
-      (if (is-tmux)
-          (send-string-to-terminal tmux-bar-cursor-string)
-        (send-string-to-terminal bar-cursor-string)))
+  (if (etcc--is-iterm)
+      (if (etcc--is-tmux)
+          (send-string-to-terminal etcc--tmux-bar-cursor-string)
+        (send-string-to-terminal etcc--bar-cursor-string)))
 
-  (if (is-gnome-terminal)
+  (if (etcc--is-gnome-terminal)
       (with-temp-buffer
-        (shell-command gnome-terminal-bar-cursor-string t))))
+        (shell-command etcc--gnome-terminal-bar-cursor-string t))))
 
-(defun set-hbar-cursor ()
+(defun etcc--set-hbar-cursor ()
   "Set cursor type hbar(underline)."
-  (if (is-iterm)
-      (if (is-tmux)
-          (send-string-to-terminal tmux-hbar-cursor-string)
-        (send-string-to-terminal hbar-cursor-string)))
+  (if (etcc--is-iterm)
+      (if (etcc--is-tmux)
+          (send-string-to-terminal etcc--tmux-hbar-cursor-string)
+        (send-string-to-terminal etcc--hbar-cursor-string)))
 
-  (if (is-gnome-terminal)
+  (if (etcc--is-gnome-terminal)
       (with-temp-buffer
-        (shell-command gnome-terminal-hbar-cursor-string t))))
+        (shell-command etcc--gnome-terminal-hbar-cursor-string t))))
 
-(defun set-box-cursor ()
+(defun etcc--set-box-cursor ()
   "Set cursor type box(block)."
-  (if (is-iterm)
-      (if (is-tmux)
-          (send-string-to-terminal tmux-box-cursor-string)
-        (send-string-to-terminal box-cursor-string)))
+  (if (etcc--is-iterm)
+      (if (etcc--is-tmux)
+          (send-string-to-terminal etcc--tmux-box-cursor-string)
+        (send-string-to-terminal etcc--box-cursor-string)))
 
-  (if (is-gnome-terminal)
+  (if (etcc--is-gnome-terminal)
       (with-temp-buffer
-        (shell-command gnome-terminal-box-cursor-string t))))
+        (shell-command etcc--gnome-terminal-box-cursor-string t))))
 
-(require 'evil)
-(defun set-evil-cursor ()
+(defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (if (evil-emacs-state-p)
-      (progn
-        (cond ((eq evil-emacs-state-cursor 'hbar)
-               (set-hbar-cursor))
-              ((eq evil-emacs-state-cursor 'box)
-               (set-box-cursor))
-              ((eq evil-emacs-state-cursor 'bar)
-               (set-bar-cursor)))))
+      (cond ((eq evil-emacs-state-cursor 'hbar)
+             (etcc--set-hbar-cursor))
+            ((eq evil-emacs-state-cursor 'box)
+             (etcc--set-box-cursor))
+            ((eq evil-emacs-state-cursor 'bar)
+             (etcc--set-bar-cursor))))
   (if (evil-insert-state-p)
-      (progn
-        (cond ((eq evil-insert-state-cursor 'hbar)
-               (set-hbar-cursor))
-              ((eq evil-insert-state-cursor 'box)
-               (set-box-cursor))
-              ((eq evil-insert-state-cursor 'bar)
-               (set-bar-cursor)))))
+      (cond ((eq evil-insert-state-cursor 'hbar)
+             (etcc--set-hbar-cursor))
+            ((eq evil-insert-state-cursor 'box)
+             (etcc--set-box-cursor))
+            ((eq evil-insert-state-cursor 'bar)
+             (etcc--set-bar-cursor))))
   (if (evil-normal-state-p)
-      (progn
-        (cond ((eq evil-visual-state-cursor 'hbar)
-               (set-hbar-cursor))
-              ((eq evil-visual-state-cursor 'box)
-               (set-box-cursor))
-              ((eq evil-visual-state-cursor 'bar)
-               (set-bar-cursor))))))
+      (cond ((eq evil-visual-state-cursor 'hbar)
+             (etcc--set-hbar-cursor))
+            ((eq evil-visual-state-cursor 'box)
+             (etcc--set-box-cursor))
+            ((eq evil-visual-state-cursor 'bar)
+             (etcc--set-bar-cursor)))))
 
-(unless (display-graphic-p)
-  (add-hook 'evil-normal-state-entry-hook 'set-box-cursor)
-  (add-hook 'evil-insert-state-entry-hook 'set-bar-cursor)
-  (add-hook 'evil-emacs-state-entry-hook 'set-hbar-cursor)
+(add-hook 'evil-normal-state-entry-hook 'etcc--set-box-cursor)
+(add-hook 'evil-insert-state-entry-hook 'etcc--set-bar-cursor)
+(add-hook 'evil-emacs-state-entry-hook 'etcc--set-hbar-cursor)
 
-  (add-hook 'post-command-hook 'set-evil-cursor))
-
-;; (add-hook 'evil-local-mode-hook 'set-evil-cursor)
-;; (add-hook 'evil-visual-state-entry-hook 'set-evil-cursor)
-;; (add-hook 'evil-motion-state-entry-hook 'set-evil-cursor)
+(add-hook 'post-command-hook 'etcc--set-evil-cursor)
 
 (provide 'evil-terminal-cursor-changer)
 
