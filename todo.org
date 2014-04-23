@@ -1,0 +1,7 @@
+* DONE To make enable on iTerm.app
+  CLOSED: [2014-04-23 Wed 16:52]
+* DONE To make enable on gnome-terminal.
+  CLOSED: [2014-04-23 Wed 16:52]
+* TODO To make enable on xterm and rxvt.
+* TODO To make enable on konsole.
+* TODO To make enable on Mac OS X Terminal.app.
