@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Wed Apr 23 20:08:10 2014 (+0900)
+;; Last-Updated: Thu Apr 24 03:51:10 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 269
+;;     Update #: 284
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -66,6 +66,24 @@
 (defcustom etcc--gnome-profile "Default"
   "The gnome-terminal's profile."
   :group 'evil-terminal-cursor-chnager)
+
+(defvar etcc--evil-visual-state-cursor
+  (if (listp evil-visual-state-cursor)
+      (car evil-visual-state-cursor)
+    evil-visual-state-cursor)
+  "Evil visual state cursor.")
+
+(defvar etcc--evil-insert-state-cursor
+  (if (listp evil-insert-state-cursor)
+      (car evil-insert-state-cursor)
+    evil-insert-state-cursor)
+  "Evil insert state cursor.")
+
+(defvar etcc--evil-emacs-state-cursor
+  (if (listp evil-emacs-state-cursor)
+      (car evil-emacs-state-cursor)
+    evil-emacs-state-cursor)
+  "Evil emacs state cursor.")
 
 ;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
 ;; http://unix.stackexchange.com/questions/3759/how-to-stop-cursor-from-blinking
@@ -163,25 +181,25 @@
 (defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (if (evil-emacs-state-p)
-      (cond ((eq evil-emacs-state-cursor 'hbar)
+      (cond ((eq etcc--evil-emacs-state-cursor 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq evil-emacs-state-cursor 'box)
+            ((eq etcc--evil-emacs-state-cursor 'box)
              (etcc--set-box-cursor))
-            ((eq evil-emacs-state-cursor 'bar)
+            ((eq etcc--evil-emacs-state-cursor 'bar)
              (etcc--set-bar-cursor))))
   (if (evil-insert-state-p)
-      (cond ((eq evil-insert-state-cursor 'hbar)
+      (cond ((eq etcc--evil-insert-state-cursor 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq evil-insert-state-cursor 'box)
+            ((eq etcc--evil-insert-state-cursor 'box)
              (etcc--set-box-cursor))
-            ((eq evil-insert-state-cursor 'bar)
+            ((eq etcc--evil-insert-state-cursor 'bar)
              (etcc--set-bar-cursor))))
   (if (evil-normal-state-p)
-      (cond ((eq evil-visual-state-cursor 'hbar)
+      (cond ((eq etcc--evil-visual-state-cursor 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq evil-visual-state-cursor 'box)
+            ((eq etcc--evil-visual-state-cursor 'box)
              (etcc--set-box-cursor))
-            ((eq evil-visual-state-cursor 'bar)
+            ((eq etcc--evil-visual-state-cursor 'bar)
              (etcc--set-bar-cursor)))))
 
 (add-hook 'post-command-hook 'etcc--set-evil-cursor)
