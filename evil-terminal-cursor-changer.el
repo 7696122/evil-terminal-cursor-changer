@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.9"))
-;; Last-Updated: Wed Apr 23 19:01:59 2014 (+0900)
+;; Last-Updated: Wed Apr 23 19:40:57 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 254
+;;     Update #: 266
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL:
 ;; Keywords: evil, terminal, cursor
@@ -27,6 +27,12 @@
 ;; If have gnome-terminal's custom profile, must set like below
 ;;
 ;;      (setq etcc--gnome-profile "Profile0")
+;;
+;; If want change cursor type, add below line.
+;;
+;;      (setq evil-visual-state-cursor 'box) ; █
+;;      (setq evil-insert-state-cursor 'bar) ; ⎸
+;;      (setq evil-emacs-state-cursor 'hbar) ; _
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -94,24 +100,19 @@
 
 (defvar etcc--gnome-terminal-set-cursor-string
   (concat "gconftool-2 --type string "
-          "--set /apps/gnome-terminal/profiles/"
-          etcc--gnome-profile
-          "/cursor_shape ")
+          "--set /apps/gnome-terminal/profiles/" etcc--gnome-profile "/cursor_shape ")
   "The gconftool string for changing cursor.")
 
 (defvar etcc--gnome-terminal-bar-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string
-          "ibeam")
+  (concat etcc--gnome-terminal-set-cursor-string "ibeam")
   "The cursor type bar(ibeam) on gnome-terminal.")
 
 (defvar etcc--gnome-terminal-box-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string
-          "block")
+  (concat etcc--gnome-terminal-set-cursor-string "block")
   "The cursor type box(block) on gnome-terminal.")
 
 (defvar etcc--gnome-terminal-hbar-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string
-          "underline")
+  (concat etcc--gnome-terminal-set-cursor-string "underline")
   "The cursor type hbar(underline) on gnome-terminal.")
 
 (defun etcc--is-iterm ()
@@ -182,10 +183,6 @@
              (etcc--set-box-cursor))
             ((eq evil-visual-state-cursor 'bar)
              (etcc--set-bar-cursor)))))
-
-(add-hook 'evil-normal-state-entry-hook 'etcc--set-box-cursor)
-(add-hook 'evil-insert-state-entry-hook 'etcc--set-bar-cursor)
-(add-hook 'evil-emacs-state-entry-hook 'etcc--set-hbar-cursor)
 
 (add-hook 'post-command-hook 'etcc--set-evil-cursor)
 
