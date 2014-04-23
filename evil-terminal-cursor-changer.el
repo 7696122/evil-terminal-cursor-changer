@@ -7,19 +7,26 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.9"))
-;; Last-Updated: Wed Apr 23 18:32:49 2014 (+0900)
+;; Last-Updated: Wed Apr 23 19:01:59 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 227
+;;     Update #: 254
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL:
 ;; Keywords: evil, terminal, cursor
-;; Compatibility:
+;; Compatibility: GNU Emacs: 24.x
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
+
+;; Then add the following lines to ~/.emacs:
 ;;
+;;      (unless (display-graphic-p)
+;;        (require 'evil-terminal-cursor-changer))
 ;;
+;; If have gnome-terminal's custom profile, must set like below
+;;
+;;      (setq etcc--gnome-profile "Profile0")
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -85,24 +92,26 @@
   (concat "\ePtmux;\e" etcc--hbar-cursor-string "\e\\")
   "The cursor type hbar(underline) on iTerm and tmux.")
 
-(defvar etcc--gnome-terminal-bar-cursor-string
-  (concat "gconftool-2 --type string "
-          "--set /apps/gnome-terminal/profiles/" etcc--gnome-profile
-          "/cursor_shape ibeam")
-  "The cursor type bar(ibeam) on gnome-terminal.")
-
-(defvar etcc--gnome-terminal-box-cursor-string
-  (concat "gconftool-2 --type string "
-          "--set /apps/gnome-terminal/"
-          etcc--gnome-profile
-          "/Profile0/cursor_shape block")
-  "The cursor type box(block) on gnome-terminal.")
-
-(defvar etcc--gnome-terminal-hbar-cursor-string
+(defvar etcc--gnome-terminal-set-cursor-string
   (concat "gconftool-2 --type string "
           "--set /apps/gnome-terminal/profiles/"
           etcc--gnome-profile
-          "/cursor_shape " "underline")
+          "/cursor_shape ")
+  "The gconftool string for changing cursor.")
+
+(defvar etcc--gnome-terminal-bar-cursor-string
+  (concat etcc--gnome-terminal-set-cursor-string
+          "ibeam")
+  "The cursor type bar(ibeam) on gnome-terminal.")
+
+(defvar etcc--gnome-terminal-box-cursor-string
+  (concat etcc--gnome-terminal-set-cursor-string
+          "block")
+  "The cursor type box(block) on gnome-terminal.")
+
+(defvar etcc--gnome-terminal-hbar-cursor-string
+  (concat etcc--gnome-terminal-set-cursor-string
+          "underline")
   "The cursor type hbar(underline) on gnome-terminal.")
 
 (defun etcc--is-iterm ()
