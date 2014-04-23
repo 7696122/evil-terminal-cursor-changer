@@ -1,15 +1,15 @@
 ;;; evil-terminal-cursor-changer.el --- Change cursor by evil state on terminal.
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
-;; Description:
+;; Description: Change cursor by evil state on terminal.
 ;; Author: 7696122
 ;; Maintainer:
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version:
 ;; Package-Requires: ()
-;; Last-Updated: Tue Apr 22 23:56:21 2014 (+0900)
+;; Last-Updated: Wed Apr 23 16:00:38 2014 (+0900)
 ;;           By: 7696122
-;;     Update #: 143
+;;     Update #: 144
 ;; URL:
 ;; Doc URL:
 ;; Keywords:
