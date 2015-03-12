@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.+"))
-;; Last-Updated: Thu Mar 12 14:17:31 2015 (+0900)
+;; Last-Updated: Thu Mar 12 14:23:44 2015 (+0900)
 ;;           By: 7696122
-;;     Update #: 285
+;;     Update #: 288
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -56,20 +56,33 @@
 ;;
 ;;; Code:
 
-
 (require 'evil)
+
+(defun etcc--is-iterm ()
+  "Running on iTerm."
+  (string= (getenv "TERM_PROGRAM") "iTerm.app"))
+
+(defun etcc--is-gnome-terminal ()
+  "Running on gnome-terminal."
+  (string= (getenv "COLORTERM") "gnome-terminal"))
+
+(defun etcc--is-tmux ()
+  "Running on tmux."
+  (if (getenv "TMUX") t nil))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
   ;; https://github.com/helino/current-gnome-terminal-profile/blob/master/current-gnome-terminal-profile.sh
-  (let ((cmd "#!/bin/bash
+  (if (etcc--is-gnome-terminal)
+      (let ((cmd "#!/bin/bash
 FNAME=$HOME/.current_gnome_profile
 gnome-terminal --save-config=$FNAME
 ENTRY=`grep ProfileID < $FNAME`
 rm $FNAME
 TERM_PROFILE=${ENTRY#*=}
 echo -n $TERM_PROFILE"))
-    (shell-command-to-string cmd)))
+        (shell-command-to-string cmd))
+    "Default"))
 
 (defvar etcc--evil-visual-state-cursor
   (if (listp evil-visual-state-cursor)
@@ -135,18 +148,6 @@ echo -n $TERM_PROFILE"))
 (defvar etcc--gnome-terminal-hbar-cursor-string
   (concat etcc--gnome-terminal-set-cursor-string "underline")
   "The cursor type hbar(underline) on gnome-terminal.")
-
-(defun etcc--is-iterm ()
-  "Running on iTerm."
-  (string= (getenv "TERM_PROGRAM") "iTerm.app"))
-
-(defun etcc--is-gnome-terminal ()
-  "Running on gnome-terminal."
-  (string= (getenv "COLORTERM") "gnome-terminal"))
-
-(defun etcc--is-tmux ()
-  "Running on tmux."
-  (if (getenv "TMUX") t nil))
 
 (defun etcc--set-bar-cursor ()
   "Set cursor type bar(ibeam)."
