@@ -6,10 +6,10 @@
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
-;; Package-Requires: ((evil "1.0.+"))
-;; Last-Updated: Thu Mar 12 22:26:42 2015 (+0900)
+;; Package-Requires: ((evil "1.0.8"))
+;; Last-Updated: Thu Mar 12 22:52:59 2015 (+0900)
 ;;           By: Yongmun Kim
-;;     Update #: 295
+;;     Update #: 299
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -101,7 +101,7 @@ echo -n $TERM_PROFILE"))
 
 (defvar etcc--evil-emacs-state-cursor
   (etcc--get-cursor-type evil-emacs-state-cursor)
-  "Evil emacs state cursor.")
+  "Evil Emacs state cursor.")
 
 ;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
 ;; http://unix.stackexchange.com/questions/3759/how-to-stop-cursor-from-blinking
