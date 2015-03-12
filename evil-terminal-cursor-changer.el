@@ -1,4 +1,4 @@
-;;; evil-terminal-cursor-changer.el --- Change cursor by evil state on terminal.
+;;; evil-terminal-cursor-changer.el --- Change cursor by evil state on terminal
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
 ;; Description: Change cursor by evil state on terminal.
@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.+"))
-;; Last-Updated: Thu Mar 12 21:31:12 2015 (+0900)
+;; Last-Updated: Thu Mar 12 22:26:42 2015 (+0900)
 ;;           By: Yongmun Kim
-;;     Update #: 294
+;;     Update #: 295
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
