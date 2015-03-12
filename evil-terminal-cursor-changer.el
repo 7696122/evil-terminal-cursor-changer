@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.+"))
-;; Last-Updated: Thu Mar 12 14:23:44 2015 (+0900)
-;;           By: 7696122
-;;     Update #: 288
+;; Last-Updated: Thu Mar 12 21:31:12 2015 (+0900)
+;;           By: Yongmun Kim
+;;     Update #: 294
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -70,6 +70,13 @@
   "Running on tmux."
   (if (getenv "TMUX") t nil))
 
+(defun etcc--get-cursor-type (evil-cursor)
+  "Return Evil cursor type for state."
+  (let ((cursor evil-cursor))
+    (while (listp cursor)
+      (setq cursor (car cursor)))
+    cursor))
+
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
   ;; https://github.com/helino/current-gnome-terminal-profile/blob/master/current-gnome-terminal-profile.sh
@@ -85,21 +92,15 @@ echo -n $TERM_PROFILE"))
     "Default"))
 
 (defvar etcc--evil-visual-state-cursor
-  (if (listp evil-visual-state-cursor)
-      (car evil-visual-state-cursor)
-    evil-visual-state-cursor)
+  (etcc--get-cursor-type evil-visual-state-cursor)
   "Evil visual state cursor.")
 
 (defvar etcc--evil-insert-state-cursor
-  (if (listp evil-insert-state-cursor)
-      (car evil-insert-state-cursor)
-    evil-insert-state-cursor)
+  (etcc--get-cursor-type evil-insert-state-cursor)
   "Evil insert state cursor.")
 
 (defvar etcc--evil-emacs-state-cursor
-  (if (listp evil-emacs-state-cursor)
-      (car evil-emacs-state-cursor)
-    evil-emacs-state-cursor)
+  (etcc--get-cursor-type evil-emacs-state-cursor)
   "Evil emacs state cursor.")
 
 ;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
