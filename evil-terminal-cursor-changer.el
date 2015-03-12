@@ -6,10 +6,10 @@
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
-;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Thu Apr 24 03:51:10 2014 (+0900)
+;; Package-Requires: ((evil "1.0.+"))
+;; Last-Updated: Thu Mar 12 14:17:31 2015 (+0900)
 ;;           By: 7696122
-;;     Update #: 284
+;;     Update #: 285
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -23,10 +23,6 @@
 ;;
 ;;      (unless (display-graphic-p)
 ;;        (require 'evil-terminal-cursor-changer))
-;;
-;; If have gnome-terminal's custom profile, must set like below
-;;
-;;      (setq etcc--gnome-profile "Profile0")
 ;;
 ;; If want change cursor type, add below line. This is evil's setting.
 ;;
@@ -63,9 +59,17 @@
 
 (require 'evil)
 
-(defcustom etcc--gnome-profile "Default"
-  "The gnome-terminal's profile."
-  :group 'evil-terminal-cursor-chnager)
+(defun etcc--get-current-gnome-profile-name ()
+  "Return Current profile name of Gnome Terminal."
+  ;; https://github.com/helino/current-gnome-terminal-profile/blob/master/current-gnome-terminal-profile.sh
+  (let ((cmd "#!/bin/bash
+FNAME=$HOME/.current_gnome_profile
+gnome-terminal --save-config=$FNAME
+ENTRY=`grep ProfileID < $FNAME`
+rm $FNAME
+TERM_PROFILE=${ENTRY#*=}
+echo -n $TERM_PROFILE"))
+    (shell-command-to-string cmd)))
 
 (defvar etcc--evil-visual-state-cursor
   (if (listp evil-visual-state-cursor)
@@ -117,8 +121,7 @@
   "The cursor type hbar(underline) on iTerm and tmux.")
 
 (defvar etcc--gnome-terminal-set-cursor-string
-  (concat "gconftool-2 --type string "
-          "--set /apps/gnome-terminal/profiles/" etcc--gnome-profile "/cursor_shape ")
+  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape " (etcc--get-current-gnome-profile-name))
   "The gconftool string for changing cursor.")
 
 (defvar etcc--gnome-terminal-bar-cursor-string
