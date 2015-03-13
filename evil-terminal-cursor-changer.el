@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Fri Mar 13 01:41:34 2015 (+0900)
+;; Last-Updated: Fri Mar 13 09:09:41 2015 (+0900)
 ;;           By: Yongmun Kim
-;;     Update #: 303
+;;     Update #: 309
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -72,11 +72,13 @@
 
 (defun etcc--get-cursor-type (evil-cursor)
   "Return Evil cursor type for state."
-  (cond
-   ((find 'bar evil-cursor) "bar")
-   ((find 'hbar evil-cursor) "hbar")
-   ((find 'box evil-cursor) "box")
-   (t cursor-type)))
+  (if (symbolp evil-state)
+      (symbol-name evil-cursor)
+    (cond
+     ((find 'bar evil-cursor) "bar")
+     ((find 'hbar evil-cursor) "hbar")
+     ((find 'box evil-cursor) "box")
+     (t cursor-type))))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
