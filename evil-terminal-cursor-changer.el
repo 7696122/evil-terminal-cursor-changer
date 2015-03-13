@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Fri Mar 13 09:09:41 2015 (+0900)
-;;           By: Yongmun Kim
-;;     Update #: 309
+;; Last-Updated: Fri Mar 13 10:27:43 2015 (+0900)
+;;           By: 7696122
+;;     Update #: 332
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -72,12 +72,14 @@
 
 (defun etcc--get-cursor-type (evil-cursor)
   "Return Evil cursor type for state."
-  (if (symbolp evil-state)
-      (symbol-name evil-cursor)
+  (if (not (listp evil-cursor))
+      (if (symbolp evil-state)
+          evil-cursor
+        cursor-type)
     (cond
-     ((find 'bar evil-cursor) "bar")
-     ((find 'hbar evil-cursor) "hbar")
-     ((find 'box evil-cursor) "box")
+     ((find 'bar evil-cursor) 'bar)
+     ((find 'hbar evil-cursor) 'hbar)
+     ((find 'box evil-cursor) 'box)
      (t cursor-type))))
 
 (defun etcc--get-current-gnome-profile-name ()
@@ -94,17 +96,17 @@ echo -n $TERM_PROFILE"))
         (shell-command-to-string cmd))
     "Default"))
 
-(defvar etcc--evil-visual-state-cursor
-  (etcc--get-cursor-type evil-visual-state-cursor)
-  "Evil visual state cursor.")
+(defun etcc--get-evil-visual-state-cursor ()
+  "Evil visual state cursor."
+  (etcc--get-cursor-type evil-visual-state-cursor))
 
-(defvar etcc--evil-insert-state-cursor
-  (etcc--get-cursor-type evil-insert-state-cursor)
-  "Evil insert state cursor.")
+(defun etcc--get-evil-insert-state-cursor ()
+  "Evil insert state cursor."
+  (etcc--get-cursor-type evil-insert-state-cursor))
 
-(defvar etcc--evil-emacs-state-cursor
-  (etcc--get-cursor-type evil-emacs-state-cursor)
-  "Evil Emacs state cursor.")
+(defun etcc--get-evil-emacs-state-cursor ()
+  "Evil Emacs state cursor."
+  (etcc--get-cursor-type evil-emacs-state-cursor))
 
 ;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
 ;; http://unix.stackexchange.com/questions/3759/how-to-stop-cursor-from-blinking
@@ -189,25 +191,25 @@ echo -n $TERM_PROFILE"))
 (defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (if (evil-emacs-state-p)
-      (cond ((eq etcc--evil-emacs-state-cursor 'hbar)
+      (cond ((eq (etcc--get-evil-emacs-state-cursor) 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq etcc--evil-emacs-state-cursor 'box)
+            ((eq (etcc--get-evil-emacs-state-cursor) 'box)
              (etcc--set-box-cursor))
-            ((eq etcc--evil-emacs-state-cursor 'bar)
+            ((eq (etcc--get-evil-emacs-state-cursor) 'bar)
              (etcc--set-bar-cursor))))
   (if (evil-insert-state-p)
-      (cond ((eq etcc--evil-insert-state-cursor 'hbar)
+      (cond ((eq (etcc--get-evil-insert-state-cursor) 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq etcc--evil-insert-state-cursor 'box)
+            ((eq (etcc--get-evil-insert-state-cursor) 'box)
              (etcc--set-box-cursor))
-            ((eq etcc--evil-insert-state-cursor 'bar)
+            ((eq (etcc--get-evil-insert-state-cursor) 'bar)
              (etcc--set-bar-cursor))))
   (if (evil-normal-state-p)
-      (cond ((eq etcc--evil-visual-state-cursor 'hbar)
+      (cond ((eq (etcc--get-evil-visual-state-cursor) 'hbar)
              (etcc--set-hbar-cursor))
-            ((eq etcc--evil-visual-state-cursor 'box)
+            ((eq (etcc--get-evil-visual-state-cursor) 'box)
              (etcc--set-box-cursor))
-            ((eq etcc--evil-visual-state-cursor 'bar)
+            ((eq (etcc--get-evil-visual-state-cursor) 'bar)
              (etcc--set-bar-cursor)))))
 
 (add-hook 'post-command-hook 'etcc--set-evil-cursor)
