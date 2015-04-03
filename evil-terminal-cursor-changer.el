@@ -1,4 +1,4 @@
-;;; evil-terminal-cursor-changer.el --- Change cursor by evil state on terminal
+;;; evil-terminal-cursor-changer.el --- Change cursor shape by evil state on terminal.
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
 ;; Description: Change cursor by evil state on terminal.
@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.1
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Fri Apr  3 11:50:01 2015 (+0900)
+;; Last-Updated: Fri Apr  3 16:59:27 2015 (+0900)
 ;;           By: Yongmun KIM
-;;     Update #: 356
+;;     Update #: 367
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -24,11 +24,13 @@
 ;;      (unless (display-graphic-p)
 ;;        (require 'evil-terminal-cursor-changer))
 ;;
-;; If want change cursor type, add below line. This is evil's setting.
+;; If want change cursor shape type, add below line. This is evil's setting.
 ;;
 ;;      (setq evil-visual-state-cursor 'box) ; █
 ;;      (setq evil-insert-state-cursor 'bar) ; ⎸
 ;;      (setq evil-emacs-state-cursor 'hbar) ; _
+;; 
+;; Now, works on Gnome Terminal(Gnome Desktop), iTerm(Mac OS X), Konsole(KDE Desktop).
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
