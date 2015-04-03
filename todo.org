@@ -3,5 +3,23 @@
 * DONE To make enable on gnome-terminal.
   CLOSED: [2014-04-23 Wed 16:52]
 * TODO To make enable on xterm and rxvt.
-* TODO To make enable on konsole.
+- http://stackoverflow.com/questions/4416909/anyway-change-the-cursor-vertical-line-instead-of-a-box
+echo -e -n "\x1b[\x30 q" # changes to blinking block
+echo -e -n "\x1b[\x31 q" # changes to blinking block also
+echo -e -n "\x1b[\x32 q" # changes to steady block
+echo -e -n "\x1b[\x33 q" # changes to blinking underline
+echo -e -n "\x1b[\x34 q" # changes to steady underline
+echo -e -n "\x1b[\x35 q" # changes to blinking bar
+echo -e -n "\x1b[\x36 q" # changes to steady bar
+- http://superuser.com/questions/607478/how-do-you-change-the-xterm-cursor-to-an-i-beam-or-vertical-bar
+echo -e -n "\x1b[\x30 q" # changes to blinking block
+echo -e -n "\x1b[\x31 q" # changes to blinking block also
+echo -e -n "\x1b[\x32 q" # changes to steady block
+echo -e -n "\x1b[\x33 q" # changes to blinking underline
+echo -e -n "\x1b[\x34 q" # changes to steady underline
+echo -e -n "\x1b[\x35 q" # changes to blinking bar
+echo -e -n "\x1b[\x36 q" # changes to steady bar
+* DONE To make enable on konsole.
+  CLOSED: [2015-04-03 Fri 11:50]
+  - CLOSING NOTE [2015-04-03 Fri 11:50]
 * TODO To make enable on Mac OS X Terminal.app.
