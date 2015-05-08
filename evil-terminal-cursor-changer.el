@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.2
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Sat May  9 01:26:06 2015 (+0900)
+;; Last-Updated: Sat May  9 01:31:35 2015 (+0900)
 ;;           By: Yongmun Kim
-;;     Update #: 368
+;;     Update #: 370
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -220,6 +220,8 @@ echo -n $TERM_PROFILE"))
    ((evil-visual-state-p)        (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor)))
    ((evil-emacs-state-p)         (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor)))))
 
+(add-hook 'post-command-hook 'etcc--set-evil-cursor)
+
 (defun turn-on-evil-terminal-cursor-changer ()
   (interactive)
   (add-hook 'post-command-hook 'etcc--set-evil-cursor))
@@ -227,8 +229,6 @@ echo -n $TERM_PROFILE"))
 (defun turn-off-evil-terminal-cursor-changer ()
   (interactive)
   (remove-hook 'post-command-hook 'etcc--set-evil-cursor))
-
-;; (add-hook 'post-command-hook 'etcc--set-evil-cursor)
 
 (provide 'evil-terminal-cursor-changer)
 
