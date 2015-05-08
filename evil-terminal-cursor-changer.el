@@ -7,9 +7,9 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.2
 ;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Sat May  9 01:31:35 2015 (+0900)
+;; Last-Updated: Sat May  9 01:53:50 2015 (+0900)
 ;;           By: Yongmun Kim
-;;     Update #: 370
+;;     Update #: 387
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -195,8 +195,6 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--get-evil-emacs-state-cursor ()         (etcc--get-cursor-shape evil-emacs-state-cursor))
 (defun etcc--get-evil-evilified-state-cursor ()     (etcc--get-cursor-shape evil-evilified-state-cursor))
-(defun etcc--get-evil-iedit-insert-state-cursor ()  (etcc--get-cursor-shape evil-iedit-insert-state-cursor))
-(defun etcc--get-evil-iedit-state-cursor ()         (etcc--get-cursor-shape evil-iedit-state-cursor))
 (defun etcc--get-evil-insert-state-cursor ()        (etcc--get-cursor-shape evil-insert-state-cursor))
 (defun etcc--get-evil-lisp-state-cursor ()          (etcc--get-cursor-shape evil-lisp-state-cursor))
 (defun etcc--get-evil-motion-state-cursor ()        (etcc--get-cursor-shape evil-motion-state-cursor))
@@ -204,13 +202,13 @@ echo -n $TERM_PROFILE"))
 (defun etcc--get-evil-operator-state-cursor ()      (etcc--get-cursor-shape evil-operator-state-cursor))
 (defun etcc--get-evil-replace-state-cursor ()       (etcc--get-cursor-shape evil-replace-state-cursor))
 (defun etcc--get-evil-visual-state-cursor ()        (etcc--get-cursor-shape evil-visual-state-cursor))
+(defun etcc--get-evil-iedit-state-cursor ()         (etcc--get-cursor-shape evil-iedit-state-cursor))
+(defun etcc--get-evil-iedit-insert-state-cursor ()  (etcc--get-cursor-shape evil-iedit-insert-state-cursor))
 
 (defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (cond
    ((evil-evilified-state-p)     (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
-   ((evil-iedit-insert-state-p)  (etcc--set-cursor-shape (etcc--get-evil-iedit-insert-state-cursor)))
-   ((evil-iedit-state-p)         (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
    ((evil-insert-state-p)        (etcc--set-cursor-shape (etcc--get-evil-insert-state-cursor)))
    ((evil-lisp-state-p)          (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
    ((evil-motion-state-p)        (etcc--set-cursor-shape (etcc--get-evil-motion-state-cursor)))
@@ -218,7 +216,10 @@ echo -n $TERM_PROFILE"))
    ((evil-operator-state-p)      (etcc--set-cursor-shape (etcc--get-evil-operator-state-cursor)))
    ((evil-replace-state-p)       (etcc--set-cursor-shape (etcc--get-evil-replace-state-cursor)))
    ((evil-visual-state-p)        (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor)))
-   ((evil-emacs-state-p)         (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor)))))
+   ((evil-emacs-state-p)         (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor)))
+   ;; ((evil-iedit-state-p)         (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
+   ;; ((evil-iedit-insert-state-p)  (etcc--set-cursor-shape (etcc--get-evil-iedit-insert-state-cursor)))
+   ))
 
 (add-hook 'post-command-hook 'etcc--set-evil-cursor)
 
