@@ -85,8 +85,9 @@
   "Detect cursor shape in evil-*-state-cursor variable"
   (if (listp evil-cursor)
       (dolist (el evil-cursor)
-        (if (symbolp el) (return el)
-          (if (consp el) (return (car el)))))
+	(if el
+	    (if (symbolp el) (return el)
+	      (if (consp el) (return (car el))))))
     (if (symbolp evil-cursor)
         evil-cursor
       cursor-type)))
@@ -191,26 +192,27 @@ echo -n $TERM_PROFILE"))
    ((eq shape 'box)               (etcc--set-box-cursor))
    ((eq shape 'evil-half-cursor)  (etcc--set-box-cursor))
    ((eq shape 'bar)               (etcc--set-bar-cursor))
-   ((eq shape 'hbar)              (etcc--set-hbar-cursor))))
+   ((eq shape 'hbar)              (etcc--set-hbar-cursor))
+   (t (etcc--set-box-cursor))))
 
 (defun etcc--get-evil-emacs-state-cursor ()         (etcc--get-cursor-shape evil-emacs-state-cursor))
-(defun etcc--get-evil-evilified-state-cursor ()     (etcc--get-cursor-shape evil-evilified-state-cursor))
+;; (defun etcc--get-evil-evilified-state-cursor ()     (etcc--get-cursor-shape evil-evilified-state-cursor))
 (defun etcc--get-evil-insert-state-cursor ()        (etcc--get-cursor-shape evil-insert-state-cursor))
-(defun etcc--get-evil-lisp-state-cursor ()          (etcc--get-cursor-shape evil-lisp-state-cursor))
+;; (defun etcc--get-evil-lisp-state-cursor ()          (etcc--get-cursor-shape evil-lisp-state-cursor))a
 (defun etcc--get-evil-motion-state-cursor ()        (etcc--get-cursor-shape evil-motion-state-cursor))
 (defun etcc--get-evil-normal-state-cursor ()        (etcc--get-cursor-shape evil-normal-state-cursor))
 (defun etcc--get-evil-operator-state-cursor ()      (etcc--get-cursor-shape evil-operator-state-cursor))
 (defun etcc--get-evil-replace-state-cursor ()       (etcc--get-cursor-shape evil-replace-state-cursor))
 (defun etcc--get-evil-visual-state-cursor ()        (etcc--get-cursor-shape evil-visual-state-cursor))
-(defun etcc--get-evil-iedit-state-cursor ()         (etcc--get-cursor-shape evil-iedit-state-cursor))
-(defun etcc--get-evil-iedit-insert-state-cursor ()  (etcc--get-cursor-shape evil-iedit-insert-state-cursor))
+;; (defun etcc--get-evil-iedit-state-cursor ()         (etcc--get-cursor-shape evil-iedit-state-cursor))
+;; (defun etcc--get-evil-iedit-insert-state-cursor ()  (etcc--get-cursor-shape evil-iedit-insert-state-cursor))
 
 (defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (cond
-   ((evil-evilified-state-p)     (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
+   ;; ((evil-evilified-state-p)     (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
    ((evil-insert-state-p)        (etcc--set-cursor-shape (etcc--get-evil-insert-state-cursor)))
-   ((evil-lisp-state-p)          (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
+   ;; ((evil-lisp-state-p)          (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
    ((evil-motion-state-p)        (etcc--set-cursor-shape (etcc--get-evil-motion-state-cursor)))
    ((evil-normal-state-p)        (etcc--set-cursor-shape (etcc--get-evil-normal-state-cursor)))
    ((evil-operator-state-p)      (etcc--set-cursor-shape (etcc--get-evil-operator-state-cursor)))
