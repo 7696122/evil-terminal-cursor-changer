@@ -77,6 +77,10 @@
   "Running on konsole."
   (if (getenv "KONSOLE_PROFILE_NAME") t nil))
 
+(defun etcc--on-apple-terminal? ()
+  "Running on Apple Terminal"
+  (string= (getenv "TERM_PROGRAM") "Apple_Terminal"))
+
 (defun etcc--on-tmux? ()
   "Running on tmux."
   (if (getenv "TMUX") t nil))
