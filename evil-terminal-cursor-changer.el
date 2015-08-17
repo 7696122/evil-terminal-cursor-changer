@@ -86,7 +86,7 @@
 
 (defun etcc--in-xterm? ()
   "Runing in xterm."
-  (downcase (getenv "XTERM_VERSION")))
+  (getenv "XTERM_VERSION"))
 
 (defun etcc--in-gnome-terminal? ()
   "Running in gnome-terminal."
