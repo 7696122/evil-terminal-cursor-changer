@@ -5,7 +5,7 @@
 ;; Author: 7696122
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
-;; Version: 0.0.2
+;; Version: 0.0.3
 ;; Package-Requires: ((evil "1.0.8"))
 ;; Last-Updated: Sat May  9 01:53:50 2015 (+0900)
 ;;           By: Yongmun Kim
@@ -139,6 +139,34 @@ echo -n $TERM_PROFILE"))
 ;; "\e]50;CursorShape=1\x7"
 ;; "\e]50;CursorShape=0\x7"
 ;; (send-string-to-terminal "\e]50;CursorShape=2\x7")
+
+;; http://stackoverflow.com/questions/4416909/anyway-change-the-cursor-vertical-line-instead-of-a-box
+;; echo -e -n "\x1b[\x30 q" # changes to blinking block
+;; echo -e -n "\x1b[\x31 q" # changes to blinking block also
+;; echo -e -n "\x1b[\x32 q" # changes to steady block
+;; echo -e -n "\x1b[\x33 q" # changes to blinking underline
+;; echo -e -n "\x1b[\x34 q" # changes to steady underline
+;; echo -e -n "\x1b[\x35 q" # changes to blinking bar
+;; echo -e -n "\x1b[\x36 q" # changes to steady bar
+
+(defvar etcc--xterm-box-blink-cursor-string "\x1b[\x30 q"
+  "The cursor type box(block) in xterm.")
+
+(defvar etcc--xterm-box-cursor-string "\x1b[\x32 q"
+  "The cursor type box(block) in xterm.")
+
+(defvar etcc--xterm-hbar-blink-cursor-string "\x1b[\x33 q"
+  "The cursor type hbar(underline) in xterm.")
+
+(defvar etcc--xterm-hbar-cursor-string "\x1b[\x34 q"
+  "The cursor type hbar(underline) in xterm.")
+
+(defvar etcc--xterm-bar-blink-cursor-string "\x1b[\x35 q"
+  "The cursor type bar(ibeam) in xterm.")
+
+(defvar etcc--xterm-bar-cursor-string "\x1b[\x36 q"
+  "The cursor type bar(ibeam) in xterm.")
+
 (defvar etcc--iterm-box-cursor-string "\e]50;CursorShape=0\x7"
   "The cursor type box(block) in iTerm.")
 
@@ -178,6 +206,13 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--set-bar-cursor ()
   "Set cursor type bar(ibeam)."
+  (if (etcc--in-xterm?)
+      (with-temp-buffer
+        (send-string-to-terminal
+         (if blink-cursor
+             etcc--xterm-bar-blink-cursor-string
+           etcc--xterm-bar-cursor-string))))
+
   (if (or (etcc--in-iterm?) (etcc--in-konsole?))
       (if (etcc--in-tmux?)
           (send-string-to-terminal etcc--tmux-iterm-bar-cursor-string)
@@ -189,6 +224,13 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--set-hbar-cursor ()
   "Set cursor type hbar(underline)."
+  (if (etcc--in-xterm?)
+      (with-temp-buffer
+        (send-string-to-terminal
+         (if blink-cursor
+             etcc--xterm-hbar-blink-cursor-string
+           etcc--xterm-hbar-cursor-string))))
+
   (if (or (etcc--in-iterm?) (etcc--in-konsole?))
       (if (etcc--in-tmux?)
           (send-string-to-terminal etcc--tmux-iterm-hbar-cursor-string)
@@ -200,6 +242,13 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--set-box-cursor ()
   "Set cursor type box(block)."
+  (if (etcc--in-xterm?)
+      (with-temp-buffer
+        (send-string-to-terminal
+         (if blink-cursor
+             etcc--xterm-box-blink-cursor-string
+           etcc--xterm-box-cursor-string))))
+
   (if (or (etcc--in-iterm?) (etcc--in-konsole?))
       (if (etcc--in-tmux?)
           (send-string-to-terminal etcc--tmux-iterm-box-cursor-string)
