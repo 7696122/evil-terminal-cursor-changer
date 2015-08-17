@@ -50,7 +50,8 @@
 ;;      (setq evil-insert-state-cursor 'bar) ; ⎸
 ;;      (setq evil-emacs-state-cursor 'hbar) ; _
 ;;
-;; Now, works in Gnome Terminal(Gnome Desktop), iTerm(Mac OS X), Konsole(KDE Desktop).
+;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS X),
+;; Konsole(KDE Desktop).
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -119,7 +120,7 @@
   "Return Current profile name of Gnome Terminal."
   ;; https://github.com/helino/current-gnome-terminal-profile/blob/master/current-gnome-terminal-profile.sh
   (if (etcc--in-gnome-terminal?)
-      (let ((cmd "#!/bin/zsh
+      (let ((cmd "#!/bin/sh
 FNAME=$HOME/.current_gnome_profile
 gnome-terminal --save-config=$FNAME
 ENTRY=`grep ProfileID < $FNAME`
