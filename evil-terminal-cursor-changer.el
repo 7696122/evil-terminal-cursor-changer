@@ -95,7 +95,7 @@
 
 (defun etcc--in-konsole? ()
   "Running in konsole."
-  (if (getenv "KONSOLE_PROFILE_NAME") t nil))
+  (getenv "KONSOLE_PROFILE_NAME"))
 
 (defun etcc--in-apple-terminal? ()
   "Running in Apple Terminal"
@@ -103,7 +103,7 @@
 
 (defun etcc--in-tmux? ()
   "Running in tmux."
-  (if (getenv "TMUX") t nil))
+  (getenv "TMUX"))
 
 (defun etcc--get-cursor-shape (evil-cursor)
   "Detect cursor shape in evil-*-state-cursor variable"
