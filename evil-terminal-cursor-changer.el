@@ -24,35 +24,39 @@
 ;; ## Introduce ##
 ;;
 ;; evil-terminal-cursor-changer is changing cursor type by evil state for evil-mode.
-;; 
+;;
 ;; When running in terminal, It's especially helpful to recognize evil's state.
 ;;
 ;; ## Install ##
-;; 
+;;
 ;; 1. Config melpa: http://melpa.org/#/getting-started
-;; 
+;;
 ;; 2. M-x package-install RET evil-terminal-cursor-changer RET
-;; 
+;;
 ;; 3. Add code to your emacs config file:（for example: ~/.emacs）：
-;; 
+;;
 ;; For Only terminal
-;; 
+;;
 ;;      (unless (display-graphic-p)
 ;;              (require 'evil-terminal-cursor-changer))
-;; 
+;;
 ;; For All
-;; 
+;;
 ;;      (require 'evil-terminal-cursor-changer)
-;; 
+;;
 ;; If want change cursor shape type, add below line. This is evil's setting.
 ;;
 ;;      (setq evil-visual-state-cursor 'box) ; █
 ;;      (setq evil-insert-state-cursor 'bar) ; ⎸
 ;;      (setq evil-emacs-state-cursor 'hbar) ; _
 ;;
-;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS X),
-;; Konsole(KDE Desktop).
-;;
+;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
+;; X), Konsole(KDE Desktop), Apple Terminal.app(restrictive
+;; supporting). If using Apple Terminal.app, must install
+;; SIMBL(http://www.culater.net/software/SIMBL/SIMBL.php) and
+;; MouseTerm plus(https://github.com/saitoha/mouseterm-plus/releases)
+;; to use evil-terminal-cursor-changer. That makes to support VT's
+;; DECSCUSR sequence.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change Log:
@@ -80,6 +84,10 @@
 ;;; Code:
 
 (require 'evil)
+
+(defun etcc--in-dumb? ()
+  "Running in dumb."
+  (string= (getenv "TERM") "dumb"))
 
 (defun etcc--in-iterm? ()
   "Running in iTerm."
@@ -150,22 +158,24 @@ echo -n $TERM_PROFILE"))
 ;; echo -e -n "\x1b[\x35 q" # changes to blinking bar
 ;; echo -e -n "\x1b[\x36 q" # changes to steady bar
 
-(defvar etcc--xterm-box-blink-cursor-string "\x1b[\x30 q"
+;; http://superuser.com/questions/270214/how-can-i-change-the-colors-of-my-xterm-using-ansi-escape-sequences
+
+(defvar etcc--xterm-box-blink-cursor-string "\e[1 q"
   "The cursor type box(block) in xterm.")
 
-(defvar etcc--xterm-box-cursor-string "\x1b[\x32 q"
+(defvar etcc--xterm-box-cursor-string "\e[2 q"
   "The cursor type box(block) in xterm.")
 
-(defvar etcc--xterm-hbar-blink-cursor-string "\x1b[\x33 q"
+(defvar etcc--xterm-hbar-blink-cursor-string "\e[3 q"
   "The cursor type hbar(underline) in xterm.")
 
-(defvar etcc--xterm-hbar-cursor-string "\x1b[\x34 q"
+(defvar etcc--xterm-hbar-cursor-string "\e[4 q"
   "The cursor type hbar(underline) in xterm.")
 
-(defvar etcc--xterm-bar-blink-cursor-string "\x1b[\x35 q"
+(defvar etcc--xterm-bar-blink-cursor-string "\e[5 q"
   "The cursor type bar(ibeam) in xterm.")
 
-(defvar etcc--xterm-bar-cursor-string "\x1b[\x36 q"
+(defvar etcc--xterm-bar-cursor-string "\e[6 q"
   "The cursor type bar(ibeam) in xterm.")
 
 (defvar etcc--iterm-box-cursor-string "\e]50;CursorShape=0\x7"
@@ -207,57 +217,57 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--set-bar-cursor ()
   "Set cursor type bar(ibeam)."
-  (if (etcc--in-xterm?)
-      (with-temp-buffer
-        (send-string-to-terminal
-         (if blink-cursor
-             etcc--xterm-bar-blink-cursor-string
-           etcc--xterm-bar-cursor-string))))
-
-  (if (or (etcc--in-iterm?) (etcc--in-konsole?))
-      (if (etcc--in-tmux?)
-          (send-string-to-terminal etcc--tmux-iterm-bar-cursor-string)
-        (send-string-to-terminal etcc--iterm-bar-cursor-string)))
-
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
-        (shell-command etcc--gnome-terminal-bar-cursor-string t))))
+        (shell-command etcc--gnome-terminal-bar-cursor-string t))
+    (if (etcc--in-konsole?)
+        (if (etcc--in-tmux?)
+            (send-string-to-terminal etcc--tmux-iterm-bar-cursor-string)
+          (send-string-to-terminal etcc--iterm-bar-cursor-string))
+      (if (or (etcc--in-xterm?)
+              (etcc--in-iterm?)
+              (etcc--in-apple-terminal?)
+              (etcc--in-dumb?))
+          (send-string-to-terminal
+           (if blink-cursor
+               etcc--xterm-bar-blink-cursor-string
+             etcc--xterm-bar-cursor-string))))))
 
 (defun etcc--set-hbar-cursor ()
   "Set cursor type hbar(underline)."
-  (if (etcc--in-xterm?)
-      (with-temp-buffer
-        (send-string-to-terminal
-         (if blink-cursor
-             etcc--xterm-hbar-blink-cursor-string
-           etcc--xterm-hbar-cursor-string))))
-
-  (if (or (etcc--in-iterm?) (etcc--in-konsole?))
-      (if (etcc--in-tmux?)
-          (send-string-to-terminal etcc--tmux-iterm-hbar-cursor-string)
-        (send-string-to-terminal etcc--iterm-hbar-cursor-string)))
-
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
-        (shell-command etcc--gnome-terminal-hbar-cursor-string t))))
+        (shell-command etcc--gnome-terminal-hbar-cursor-string t))
+    (if (etcc--in-konsole?)
+        (if (etcc--in-tmux?)
+            (send-string-to-terminal etcc--tmux-iterm-hbar-cursor-string)
+          (send-string-to-terminal etcc--iterm-hbar-cursor-string))
+      (if (or (etcc--in-xterm?)
+              (etcc--in-iterm?)
+              (etcc--in-apple-terminal?)
+              (etcc--in-dumb?))
+          (send-string-to-terminal
+           (if blink-cursor
+               etcc--xterm-hbar-blink-cursor-string
+             etcc--xterm-hbar-cursor-string))))))
 
 (defun etcc--set-box-cursor ()
   "Set cursor type box(block)."
-  (if (etcc--in-xterm?)
-      (with-temp-buffer
-        (send-string-to-terminal
-         (if blink-cursor
-             etcc--xterm-box-blink-cursor-string
-           etcc--xterm-box-cursor-string))))
-
-  (if (or (etcc--in-iterm?) (etcc--in-konsole?))
-      (if (etcc--in-tmux?)
-          (send-string-to-terminal etcc--tmux-iterm-box-cursor-string)
-        (send-string-to-terminal etcc--iterm-box-cursor-string)))
-
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
-        (shell-command etcc--gnome-terminal-box-cursor-string t))))
+        (shell-command etcc--gnome-terminal-box-cursor-string t))
+    (if (etcc--in-konsole?)
+        (if (etcc--in-tmux?)
+            (send-string-to-terminal etcc--tmux-iterm-box-cursor-string)
+          (send-string-to-terminal etcc--iterm-box-cursor-string))
+      (if (or (etcc--in-xterm?)
+              (etcc--in-iterm?)
+              (etcc--in-apple-terminal?)
+              (etcc--in-dumb?))
+          (send-string-to-terminal
+           (if blink-cursor
+               etcc--xterm-box-blink-cursor-string
+             etcc--xterm-box-cursor-string))))))
 
 (defun etcc--set-cursor-shape (shape)
   "Set cursor shape."

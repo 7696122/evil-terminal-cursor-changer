@@ -35,8 +35,14 @@ If want change cursor shape type, add below line. This is evil's setting.
          (setq evil-insert-state-cursor 'bar) ; ⎸
          (setq evil-emacs-state-cursor 'hbar) ; _
 
-Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS X),
-Konsole(KDE Desktop).
+Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
+X), Konsole(KDE Desktop), Apple Terminal.app(restrictive
+supporting). If using Apple Terminal.app, must install
+SIMBL(http://www.culater.net/software/SIMBL/SIMBL.php) and
+MouseTerm plus(https://github.com/saitoha/mouseterm-plus/releases)
+to use evil-terminal-cursor-changer. That makes to support VT's
+DECSCUSR sequence.
+;
 
 ## Change Log
 
