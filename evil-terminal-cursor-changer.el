@@ -175,7 +175,7 @@ echo -n $TERM_PROFILE"))
 
 ;;; Cursor Color
 (defun etcc--get-xterm-cursor-color-string (evil-cursor)
-  (if etcc--enable-blink-cursor?
+  (if etcc--enable-cursor-color?
       ;; https://www.iterm2.com/documentation-escape-codes.html
       (let ((prefix (if (etcc--in-iterm?) "\e]Pl" "\e]12;"))
             (suffix (if (etcc--in-iterm?) "\e\\" "\a")))
