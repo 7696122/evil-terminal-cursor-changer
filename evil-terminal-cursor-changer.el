@@ -153,11 +153,13 @@
     (color-rgb-to-hex r g b)))
 
 (defun etcc--get-evil-cursor-color-by-hex (evil-cursor)
-  (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor))
-        ;; (cursor-background (face-attribute 'cursor :background))
-        )
+  (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor)))
     (unless (string= "unspecified" cursor-background)
-      (etcc--color-name-to-hex cursor-background))))
+      (let ((hex-color (etcc--color-name-to-hex cursor-background)))
+        (if (etcc--in-iterm?)
+            (if (string-prefix-p "#" hex-color)
+                (substring hex-color 1))
+          hex-color)))))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
@@ -177,9 +179,13 @@ echo -n $TERM_PROFILE"))
 (defun etcc--get-xterm-cursor-color-string (evil-cursor)
   (if etcc--enable-cursor-color?
       ;; https://www.iterm2.com/documentation-escape-codes.html
-      (let ((prefix (if (etcc--in-iterm?) "\e]Pl" "\e]12;"))
-            (suffix (if (etcc--in-iterm?) "\e\\" "\a")))
-        (concat prefix (etcc--get-evil-cursor-color evil-cursor) suffix))))
+      (let ((prefix (if (etcc--in-iterm?)
+                        "\e]Pl"
+                      "\e]12;"))
+            (suffix (if (etcc--in-iterm?)
+                        "\e\\"
+                      "\a")))
+        (concat prefix (etcc--get-evil-cursor-color-by-hex evil-cursor) suffix))))
 
 ;;; Cursor Shape
 (let ((prefix "\e[")
