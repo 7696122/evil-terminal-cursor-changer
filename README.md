@@ -1,4 +1,4 @@
-# evil-terminal-cursor-changer - Change cursor shape by evil state in terminal
+# evil-terminal-cursor-changer - Change cursor shape and color by evil state in terminal
 
 *Author:* 7696122<br>
 *Version:* 0.0.3<br>
@@ -8,7 +8,7 @@
 
 ## Introduce ##
 
-evil-terminal-cursor-changer is changing cursor type by evil state for evil-mode.
+evil-terminal-cursor-changer is changing cursor shape and color by evil state for evil-mode.
 
 When running in terminal, It's especially helpful to recognize evil's state.
 
@@ -30,10 +30,10 @@ For All
          (require 'evil-terminal-cursor-changer)
 
 If want change cursor shape type, add below line. This is evil's setting.
-
-         (setq evil-visual-state-cursor 'box) ; █
-         (setq evil-insert-state-cursor 'bar) ; ⎸
-         (setq evil-emacs-state-cursor 'hbar) ; _
+ 
+     (setq evil-visual-state-cursor '("red" box)); █
+     (setq evil-insert-state-cursor '("green" bar)); ⎸
+     (setq evil-emacs-state-cursor '("blue" hbar)); _
 
 Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
 X), Konsole(KDE Desktop), dumb(etc. mintty), Apple
@@ -43,6 +43,7 @@ and MouseTerm
 plus(https://github.com/saitoha/mouseterm-plus/releases) to use
 evil-terminal-cursor-changer. That makes to support VT's DECSCUSR
 sequence.
+ 
 ;
 
 ## Change Log

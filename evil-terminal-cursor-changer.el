@@ -1,7 +1,7 @@
-;;; evil-terminal-cursor-changer.el --- Change cursor shape by evil state in terminal.
+;;; evil-terminal-cursor-changer.el --- Change cursor shape and color by evil state in terminal
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
-;; Description: Change cursor by evil state in terminal.
+;; Description: Change cursor shape and color by evil state in terminal.
 ;; Author: 7696122
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
@@ -23,7 +23,7 @@
 
 ;; ## Introduce ##
 ;;
-;; evil-terminal-cursor-changer is changing cursor type by evil state for evil-mode.
+;; evil-terminal-cursor-changer is changing cursor shape and color by evil state for evil-mode.
 ;;
 ;; When running in terminal, It's especially helpful to recognize evil's state.
 ;;
@@ -45,10 +45,10 @@
 ;;      (require 'evil-terminal-cursor-changer)
 ;;
 ;; If want change cursor shape type, add below line. This is evil's setting.
-;;
-;;      (setq evil-visual-state-cursor 'box) ; █
-;;      (setq evil-insert-state-cursor 'bar) ; ⎸
-;;      (setq evil-emacs-state-cursor 'hbar) ; _
+;; 
+;;      (setq evil-visual-state-cursor '("red" box)); █
+;;      (setq evil-insert-state-cursor '("green" bar)); ⎸
+;;      (setq evil-emacs-state-cursor '("blue" hbar)); _
 ;;
 ;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
 ;; X), Konsole(KDE Desktop), dumb(etc. mintty), Apple
@@ -58,10 +58,11 @@
 ;; plus(https://github.com/saitoha/mouseterm-plus/releases) to use
 ;; evil-terminal-cursor-changer. That makes to support VT's DECSCUSR
 ;; sequence.
+;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change Log:
-;;
+;; 
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -85,6 +86,16 @@
 ;;; Code:
 
 (require 'evil)
+
+(defgroup evil-terminal-cursor-changer nil
+  "Change cursor shape in terminal for Evil."
+  :group 'evil-terminal-cursor-changer)
+
+(defcustom etcc--enable-cursor-color? t
+  "On/off evil cursor color in Evil.")
+
+(defcustom etcc--enable-blink-cursor? t
+  "On/off blink cursor in Evil")
 
 (defun etcc--in-dumb? ()
   "Running in dumb."
@@ -114,7 +125,13 @@
   "Running in tmux."
   (getenv "TMUX"))
 
-(defun etcc--get-cursor-shape (evil-cursor)
+(defun etcc--get-evil-cursor-color (evil-cursor)
+  "Detect cursor shape in evil-*-state-cursor variable"
+  (if (listp evil-cursor)
+      (dolist (el evil-cursor)
+        (if (stringp el) (return el)))))
+
+(defun etcc--get-evil-cursor-shape (evil-cursor)
   "Detect cursor shape in evil-*-state-cursor variable"
   (if (listp evil-cursor)
       (dolist (el evil-cursor)
@@ -124,6 +141,23 @@
     (if (symbolp evil-cursor)
         evil-cursor
       cursor-type)))
+
+(defun etcc--color-name-to-hex (name)
+  "Convert color name to hex value."
+  (if (hexrgb-rgb-hex-string-p name)
+      (return name))
+  (let* ((rgb (color-name-to-rgb name))
+         (r (nth 0 rgb))
+         (g (nth 1 rgb))
+         (b (nth 2 rgb)))
+    (color-rgb-to-hex r g b)))
+
+(defun etcc--get-evil-cursor-color-by-hex (evil-cursor)
+  (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor))
+        ;; (cursor-background (face-attribute 'cursor :background))
+        )
+    (unless (string= "unspecified" cursor-background)
+      (etcc--color-name-to-hex cursor-background))))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
@@ -139,69 +173,73 @@ echo -n $TERM_PROFILE"))
         (shell-command-to-string cmd))
     "Default"))
 
-;; https://code.google.com/p/iterm2/wiki/ProprietaryEscapeCodes
-;; http://unix.stackexchange.com/questions/3759/how-to-stop-cursor-from-blinking
-;; http://www.joinc.co.kr/modules/moniwiki/wiki.php/man/1/echo
-;; http://vim.wikia.com/wiki/Change_cursor_shape_in_different_modes
-;; \<Esc>]50;CursorShape=0\x7
-;; konsole
-;; "\e]50;CursorShape=2\x7"
-;; "\e]50;CursorShape=1\x7"
-;; "\e]50;CursorShape=0\x7"
-;; (send-string-to-terminal "\e]50;CursorShape=2\x7")
+;;; Cursor Color
+(defun etcc--get-xterm-cursor-color-string (evil-cursor)
+  (if etcc--enable-blink-cursor?
+      ;; https://www.iterm2.com/documentation-escape-codes.html
+      (let ((prefix (if (etcc--in-iterm?) "\e]Pl" "\e]12;"))
+            (suffix (if (etcc--in-iterm?) "\e\\" "\a")))
+        (concat prefix (etcc--get-evil-cursor-color evil-cursor) suffix))))
 
-;; http://stackoverflow.com/questions/4416909/anyway-change-the-cursor-vertical-line-instead-of-a-box
-;; echo -e -n "\x1b[\x30 q" # changes to blinking block
-;; echo -e -n "\x1b[\x31 q" # changes to blinking block also
-;; echo -e -n "\x1b[\x32 q" # changes to steady block
-;; echo -e -n "\x1b[\x33 q" # changes to blinking underline
-;; echo -e -n "\x1b[\x34 q" # changes to steady underline
-;; echo -e -n "\x1b[\x35 q" # changes to blinking bar
-;; echo -e -n "\x1b[\x36 q" # changes to steady bar
+;;; Cursor Shape
+(let ((prefix "\e[")
+      (suffix " q"))
+  (defvar etcc--xterm-box-blink-cursor-string 
+    (concat prefix "1" suffix)
+    "The cursor type box(block) in xterm.")
 
-;; http://superuser.com/questions/270214/how-can-i-change-the-colors-of-my-xterm-using-ansi-escape-sequences
+  (defvar etcc--xterm-box-cursor-string
+    (concat prefix "2" suffix)
+    "The cursor type box(block) in xterm.")
 
-(defvar etcc--xterm-box-blink-cursor-string "\e[1 q"
-  "The cursor type box(block) in xterm.")
+  (defvar etcc--xterm-hbar-blink-cursor-string
+    (concat prefix "3" suffix)
+    "The cursor type hbar(underline) in xterm.")
 
-(defvar etcc--xterm-box-cursor-string "\e[2 q"
-  "The cursor type box(block) in xterm.")
+  (defvar etcc--xterm-hbar-cursor-string
+    (concat prefix "4" suffix)
+    "The cursor type hbar(underline) in xterm.")
 
-(defvar etcc--xterm-hbar-blink-cursor-string "\e[3 q"
-  "The cursor type hbar(underline) in xterm.")
+  (defvar etcc--xterm-bar-blink-cursor-string
+    (concat prefix "5" suffix)
+    "The cursor type bar(ibeam) in xterm.")
 
-(defvar etcc--xterm-hbar-cursor-string "\e[4 q"
-  "The cursor type hbar(underline) in xterm.")
+  (defvar etcc--xterm-bar-cursor-string
+    (concat prefix "6" suffix)
+    "The cursor type bar(ibeam) in xterm."))
 
-(defvar etcc--xterm-bar-blink-cursor-string "\e[5 q"
-  "The cursor type bar(ibeam) in xterm.")
+(let ((prefix "\e]50;CursorShape=")
+      (suffix "\x7"))
+  (defvar etcc--iterm-box-cursor-string
+    (concat prefix "0" suffix)
+    "The cursor type box(block) in iTerm.")
 
-(defvar etcc--xterm-bar-cursor-string "\e[6 q"
-  "The cursor type bar(ibeam) in xterm.")
+  (defvar etcc--iterm-bar-cursor-string
+    (concat prefix "1" suffix)
+    "The cursor type bar(ibeam) in iTerm.")
 
-(defvar etcc--iterm-box-cursor-string "\e]50;CursorShape=0\x7"
-  "The cursor type box(block) in iTerm.")
+  (defvar etcc--iterm-hbar-cursor-string 
+    (concat prefix "2" suffix)
+    "The cursor type hbar(underline) in iTerm."))
 
-(defvar etcc--iterm-bar-cursor-string "\e]50;CursorShape=1\x7"
-  "The cursor type bar(ibeam) in iTerm.")
+(let ((prefix "\ePtmux;\e")
+      (suffix "\e\\"))
+  (defvar etcc--tmux-iterm-box-cursor-string
+    (concat prefix etcc--iterm-box-cursor-string suffix)
+    "The cursor type box(block) in iTerm and tmux.")
 
-(defvar etcc--iterm-hbar-cursor-string "\e]50;CursorShape=2\x7"
-  "The cursor type hbar(underline) in iTerm.")
+  (defvar etcc--tmux-iterm-bar-cursor-string
+    (concat prefix etcc--iterm-bar-cursor-string suffix)
+    "The cursor type bar(ibeam) in iTerm and tmux.")
 
-(defvar etcc--tmux-iterm-box-cursor-string
-  (concat "\ePtmux;\e" etcc--iterm-box-cursor-string "\e\\")
-  "The cursor type box(block) in iTerm and tmux.")
+  (defvar etcc--tmux-iterm-hbar-cursor-string
+    (concat prefix etcc--iterm-hbar-cursor-string suffix)
+    "The cursor type hbar(underline) in iTerm and tmux."))
 
-(defvar etcc--tmux-iterm-bar-cursor-string
-  (concat "\ePtmux;\e" etcc--iterm-bar-cursor-string "\e\\")
-  "The cursor type bar(ibeam) in iTerm and tmux.")
-
-(defvar etcc--tmux-iterm-hbar-cursor-string
-  (concat "\ePtmux;\e" etcc--iterm-hbar-cursor-string "\e\\")
-  "The cursor type hbar(underline) in iTerm and tmux.")
-
+;;; Gnome Terminal
 (defvar etcc--gnome-terminal-set-cursor-string
-  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape " (etcc--get-current-gnome-profile-name))
+  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape " 
+          (etcc--get-current-gnome-profile-name))
   "The gconftool string for changing cursor.")
 
 (defvar etcc--gnome-terminal-bar-cursor-string
@@ -216,7 +254,7 @@ echo -n $TERM_PROFILE"))
   (concat etcc--gnome-terminal-set-cursor-string "underline")
   "The cursor type hbar(underline) in gnome-terminal.")
 
-(defun etcc--set-bar-cursor ()
+(defun etcc--set-bar-cursor (evil-cursor)
   "Set cursor type bar(ibeam)."
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
@@ -224,17 +262,23 @@ echo -n $TERM_PROFILE"))
     (if (etcc--in-konsole?)
         (if (etcc--in-tmux?)
             (send-string-to-terminal etcc--tmux-iterm-bar-cursor-string)
-          (send-string-to-terminal etcc--iterm-bar-cursor-string))
+          (send-string-to-terminal ;; etcc--iterm-bar-cursor-string
+           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
+                       etcc--xterm-bar-blink-cursor-string
+                     etcc--xterm-bar-cursor-string)
+                   (etcc--get-xterm-cursor-color-string evil-cursor))
+                                   ))
       (if (or (etcc--in-xterm?)
               (etcc--in-iterm?)
               (etcc--in-apple-terminal?)
               (etcc--in-dumb?))
           (send-string-to-terminal
-           (if blink-cursor
-               etcc--xterm-bar-blink-cursor-string
-             etcc--xterm-bar-cursor-string))))))
+           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
+                       etcc--xterm-bar-blink-cursor-string
+                     etcc--xterm-bar-cursor-string)
+                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
 
-(defun etcc--set-hbar-cursor ()
+(defun etcc--set-hbar-cursor (evil-cursor)
   "Set cursor type hbar(underline)."
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
@@ -248,11 +292,12 @@ echo -n $TERM_PROFILE"))
               (etcc--in-apple-terminal?)
               (etcc--in-dumb?))
           (send-string-to-terminal
-           (if blink-cursor
-               etcc--xterm-hbar-blink-cursor-string
-             etcc--xterm-hbar-cursor-string))))))
+           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
+                       etcc--xterm-hbar-blink-cursor-string
+                     etcc--xterm-hbar-cursor-string)
+                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
 
-(defun etcc--set-box-cursor ()
+(defun etcc--set-box-cursor (evil-cursor)
   "Set cursor type box(block)."
   (if (etcc--in-gnome-terminal?)
       (with-temp-buffer
@@ -266,45 +311,78 @@ echo -n $TERM_PROFILE"))
               (etcc--in-apple-terminal?)
               (etcc--in-dumb?))
           (send-string-to-terminal
-           (if blink-cursor
-               etcc--xterm-box-blink-cursor-string
-             etcc--xterm-box-cursor-string))))))
+           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
+                       etcc--xterm-box-blink-cursor-string
+                     etcc--xterm-box-cursor-string)
+                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
 
-(defun etcc--set-cursor-shape (shape)
+(defun etcc--set-cursor-shape (shape evil-cursor)
   "Set cursor shape."
   (cond
-   ((eq shape 'box)               (etcc--set-box-cursor))
-   ((eq shape 'evil-half-cursor)  (etcc--set-box-cursor))
-   ((eq shape 'bar)               (etcc--set-bar-cursor))
-   ((eq shape 'hbar)              (etcc--set-hbar-cursor))
+   ((eq shape 'box)               (etcc--set-box-cursor evil-cursor))
+   ((eq shape 'evil-half-cursor)  (etcc--set-box-cursor evil-cursor))
+   ((eq shape 'bar)               (etcc--set-bar-cursor evil-cursor))
+   ((eq shape 'hbar)              (etcc--set-hbar-cursor evil-cursor))
    (t (etcc--set-box-cursor))))
 
-(defun etcc--get-evil-emacs-state-cursor ()         (etcc--get-cursor-shape evil-emacs-state-cursor))
-;; (defun etcc--get-evil-evilified-state-cursor ()     (etcc--get-cursor-shape evil-evilified-state-cursor))
-(defun etcc--get-evil-insert-state-cursor ()        (etcc--get-cursor-shape evil-insert-state-cursor))
-;; (defun etcc--get-evil-lisp-state-cursor ()          (etcc--get-cursor-shape evil-lisp-state-cursor))a
-(defun etcc--get-evil-motion-state-cursor ()        (etcc--get-cursor-shape evil-motion-state-cursor))
-(defun etcc--get-evil-normal-state-cursor ()        (etcc--get-cursor-shape evil-normal-state-cursor))
-(defun etcc--get-evil-operator-state-cursor ()      (etcc--get-cursor-shape evil-operator-state-cursor))
-(defun etcc--get-evil-replace-state-cursor ()       (etcc--get-cursor-shape evil-replace-state-cursor))
-(defun etcc--get-evil-visual-state-cursor ()        (etcc--get-cursor-shape evil-visual-state-cursor))
-;; (defun etcc--get-evil-iedit-state-cursor ()         (etcc--get-cursor-shape evil-iedit-state-cursor))
-;; (defun etcc--get-evil-iedit-insert-state-cursor ()  (etcc--get-cursor-shape evil-iedit-insert-state-cursor))
+(defun etcc--get-evil-emacs-state-cursor ()         
+  (etcc--get-evil-cursor-shape evil-emacs-state-cursor))
+
+;; (defun etcc--get-evil-evilified-state-cursor ()
+;;   (etcc--get-evil-cursor-shape evil-evilified-state-cursor))
+
+(defun etcc--get-evil-insert-state-cursor ()        
+  (etcc--get-evil-cursor-shape evil-insert-state-cursor))
+
+;; (defun etcc--get-evil-lisp-state-cursor ()
+;;   (etcc--get-evil-cursor-shape evil-lisp-state-cursor))
+
+(defun etcc--get-evil-motion-state-cursor ()
+  (etcc--get-evil-cursor-shape evil-motion-state-cursor))
+
+(defun etcc--get-evil-normal-state-cursor ()
+  (etcc--get-evil-cursor-shape evil-normal-state-cursor))
+
+(defun etcc--get-evil-operator-state-cursor ()
+  (etcc--get-evil-cursor-shape evil-operator-state-cursor))
+
+(defun etcc--get-evil-replace-state-cursor ()
+  (etcc--get-evil-cursor-shape evil-replace-state-cursor))
+
+(defun etcc--get-evil-visual-state-cursor ()
+  (etcc--get-evil-cursor-shape evil-visual-state-cursor))
+
+;; (defun etcc--get-evil-iedit-state-cursor ()
+;;   (etcc--get-evil-cursor-shape evil-iedit-state-cursor))
+
+;; (defun etcc--get-evil-iedit-insert-state-cursor ()
+;;   (etcc--get-evil-cursor-shape evil-iedit-insert-state-cursor))
 
 (defun etcc--set-evil-cursor ()
   "Set cursor type for Evil."
   (cond
-   ;; ((evil-evilified-state-p)     (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
-   ((evil-insert-state-p)        (etcc--set-cursor-shape (etcc--get-evil-insert-state-cursor)))
-   ;; ((evil-lisp-state-p)          (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
-   ((evil-motion-state-p)        (etcc--set-cursor-shape (etcc--get-evil-motion-state-cursor)))
-   ((evil-normal-state-p)        (etcc--set-cursor-shape (etcc--get-evil-normal-state-cursor)))
-   ((evil-operator-state-p)      (etcc--set-cursor-shape (etcc--get-evil-operator-state-cursor)))
-   ((evil-replace-state-p)       (etcc--set-cursor-shape (etcc--get-evil-replace-state-cursor)))
-   ((evil-visual-state-p)        (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor)))
-   ((evil-emacs-state-p)         (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor)))
-   ;; ((evil-iedit-state-p)         (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
-   ;; ((evil-iedit-insert-state-p)  (etcc--set-cursor-shape (etcc--get-evil-iedit-insert-state-cursor)))
+   ;; ((evil-evilified-state-p)
+   ;;  (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
+   ((evil-insert-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-insert-state-cursor) evil-insert-state-cursor))
+   ;; ((evil-lisp-state-p)
+   ;;  (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
+   ((evil-motion-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-motion-state-cursor) evil-motion-state-cursor))
+   ((evil-normal-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-normal-state-cursor) evil-normal-state-cursor))
+   ((evil-operator-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-operator-state-cursor) evil-operator-state-cursor))
+   ((evil-replace-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-replace-state-cursor) evil-replace-state-cursor))
+   ((evil-visual-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor) evil-visual-state-cursor))
+   ((evil-emacs-state-p)
+    (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor) evil-emacs-state-cursor))
+   ;; ((evil-iedit-state-p)
+   ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
+   ;; ((evil-iedit-insert-state-p)
+   ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-insert-state-cursor)))
    ))
 
 (add-hook 'post-command-hook 'etcc--set-evil-cursor)
