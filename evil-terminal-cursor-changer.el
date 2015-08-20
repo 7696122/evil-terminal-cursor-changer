@@ -6,6 +6,7 @@
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.3
+;; Package-Version: 20150819.907
 ;; Package-Requires: ((evil "1.0.8"))
 ;; Last-Updated: Sat May  9 01:53:50 2015 (+0900)
 ;;           By: Yongmun Kim
@@ -129,7 +130,8 @@
   "Detect cursor shape in evil-*-state-cursor variable"
   (if (listp evil-cursor)
       (dolist (el evil-cursor)
-        (if (stringp el) (return el)))))
+        (if (stringp el) (return el)))
+    evil-cursor))
 
 (defun etcc--get-evil-cursor-shape (evil-cursor)
   "Detect cursor shape in evil-*-state-cursor variable"
@@ -140,7 +142,10 @@
               (if (consp el) (return (car el))))))
     (if (symbolp evil-cursor)
         evil-cursor
-      cursor-type)))
+      (if (or (eq cursor-type t)
+              (not cursor-type))
+          'box
+        cursor-type))))
 
 (defun etcc--color-name-to-hex (name)
   "Convert color name to hex value."
@@ -154,12 +159,11 @@
 
 (defun etcc--get-evil-cursor-color-by-hex (evil-cursor)
   (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor)))
-    (unless (string= "unspecified" cursor-background)
-      (let ((hex-color (etcc--color-name-to-hex cursor-background)))
-        (if (etcc--in-iterm?)
-            (if (string-prefix-p "#" hex-color)
-                (substring hex-color 1))
-          hex-color)))))
+    (let ((hex-color (etcc--color-name-to-hex cursor-background)))
+      (if (etcc--in-iterm?)
+          (if (string-prefix-p "#" hex-color)
+              (substring hex-color 1))
+        hex-color))))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
