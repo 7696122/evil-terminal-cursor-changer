@@ -92,7 +92,7 @@
   "Change cursor shape in terminal for Evil."
   :group 'evil-terminal-cursor-changer)
 
-(defcustom etcc--enable-cursor-color? t
+(defcustom etcc--enable-cursor-color? nil
   "On/off evil cursor color in Evil.")
 
 (defcustom etcc--enable-blink-cursor? t
@@ -130,7 +130,8 @@
   "Detect cursor shape in evil-*-state-cursor variable"
   (if (listp evil-cursor)
       (dolist (el evil-cursor)
-        (if (stringp el) (return el)))
+        (if (stringp el)
+            (return el)))
     evil-cursor))
 
 (defun etcc--get-evil-cursor-shape (evil-cursor)
@@ -276,8 +277,7 @@ echo -n $TERM_PROFILE"))
            (concat (if (and etcc--enable-blink-cursor? blink-cursor)
                        etcc--xterm-bar-blink-cursor-string
                      etcc--xterm-bar-cursor-string)
-                   (etcc--get-xterm-cursor-color-string evil-cursor))
-                                   ))
+                   (etcc--get-xterm-cursor-color-string evil-cursor))))
       (if (or (etcc--in-xterm?)
               (etcc--in-iterm?)
               (etcc--in-apple-terminal?)
@@ -388,7 +388,9 @@ echo -n $TERM_PROFILE"))
    ((evil-visual-state-p)
     (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor) evil-visual-state-cursor))
    ((evil-emacs-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor) evil-emacs-state-cursor))
+    (etcc--set-cursor-shape
+     (etcc--get-evil-emacs-state-cursor)
+     evil-emacs-state-cursor))
    ;; ((evil-iedit-state-p)
    ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
    ;; ((evil-iedit-insert-state-p)
