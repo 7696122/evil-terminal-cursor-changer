@@ -7,7 +7,7 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.3
 ;; Package-Version: 20150819.907
-;; Package-Requires: ((evil "1.0.8"))
+;; Package-Requires: ((evil "1.0.8") (hexrgb "21.0"))
 ;; Last-Updated: Sat May  9 01:53:50 2015 (+0900)
 ;;           By: Yongmun Kim
 ;;     Update #: 387
@@ -87,6 +87,7 @@
 ;;; Code:
 
 (require 'evil)
+(require 'hexrgb)
 
 (defgroup evil-terminal-cursor-changer nil
   "Change cursor shape in terminal for Evil."
@@ -139,8 +140,10 @@
   (if (listp evil-cursor)
       (dolist (el evil-cursor)
         (if el
-            (if (symbolp el) (return el)
-              (if (consp el) (return (car el))))))
+            (if (symbolp el)
+                (return el)
+              (if (consp el)
+                  (return (car el))))))
     (if (symbolp evil-cursor)
         evil-cursor
       (if (or (eq cursor-type t)
@@ -151,12 +154,12 @@
 (defun etcc--color-name-to-hex (name)
   "Convert color name to hex value."
   (if (hexrgb-rgb-hex-string-p name)
-      (return name))
-  (let* ((rgb (color-name-to-rgb name))
-         (r (nth 0 rgb))
-         (g (nth 1 rgb))
-         (b (nth 2 rgb)))
-    (color-rgb-to-hex r g b)))
+      name
+    (let* ((rgb (color-name-to-rgb name))
+           (r (nth 0 rgb))
+           (g (nth 1 rgb))
+           (b (nth 2 rgb)))
+      (color-rgb-to-hex r g b))))
 
 (defun etcc--get-evil-cursor-color-by-hex (evil-cursor)
   (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor)))
@@ -388,9 +391,7 @@ echo -n $TERM_PROFILE"))
    ((evil-visual-state-p)
     (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor) evil-visual-state-cursor))
    ((evil-emacs-state-p)
-    (etcc--set-cursor-shape
-     (etcc--get-evil-emacs-state-cursor)
-     evil-emacs-state-cursor))
+    (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor) evil-emacs-state-cursor))
    ;; ((evil-iedit-state-p)
    ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
    ;; ((evil-iedit-insert-state-p)
