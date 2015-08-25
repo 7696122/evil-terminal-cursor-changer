@@ -46,7 +46,7 @@
 ;;      (require 'evil-terminal-cursor-changer)
 ;;
 ;; If want change cursor shape type, add below line. This is evil's setting.
-;; 
+;;
 ;;      (setq evil-visual-state-cursor '("red" box)); █
 ;;      (setq evil-insert-state-cursor '("green" bar)); ⎸
 ;;      (setq evil-emacs-state-cursor '("blue" hbar)); _
@@ -59,11 +59,11 @@
 ;; plus(https://github.com/saitoha/mouseterm-plus/releases) to use
 ;; evil-terminal-cursor-changer. That makes to support VT's DECSCUSR
 ;; sequence.
-;; 
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Change Log:
-;; 
+;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -168,9 +168,9 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--make-konsole-cursor-shape-seq (shape)
   "Make escape sequence for konsole."
-  (let ((prefix	 "\e]50;CursorShape=")
-        (suffix	 "\x7")
-        (box	 "0")
+  (let ((prefix  "\e]50;CursorShape=")
+        (suffix  "\x7")
+        (box     "0")
         (bar     "1")
         (hbar    "2")
         (seq     nil))
@@ -188,7 +188,7 @@ echo -n $TERM_PROFILE"))
   "Make escape sequence for gnome terminal."
   (let* ((profile (etcc--get-current-gnome-profile-name))
          (prefix  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape "
-                         profile))
+                          profile))
          (box     "block")
          (bar     "ibeam")
          (hbar    "underline"))
@@ -200,11 +200,11 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--make-xterm-cursor-shape-seq (shape)
   "Make escape sequence for XTerm."
-  (let ((prefix		 "\e[")
-        (suffix		 " q")
-        (box-blink	 "1")
-        (box		 "2")
-        (hbar-blink	 "3")
+  (let ((prefix      "\e[")
+        (suffix      " q")
+        (box-blink   "1")
+        (box         "2")
+        (hbar-blink  "3")
         (hbar        "4")
         (bar-blink   "5")
         (bar         "6"))
