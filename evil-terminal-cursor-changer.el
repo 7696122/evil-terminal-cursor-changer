@@ -5,12 +5,12 @@
 ;; Author: 7696122
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
-;; Version: 0.0.3
+;; Version: 0.0.4
 ;; Package-Version: 20150819.907
 ;; Package-Requires: ((evil "1.0.8") (hexrgb "21.0"))
-;; Last-Updated: Sat May  9 01:53:50 2015 (+0900)
-;;           By: Yongmun Kim
-;;     Update #: 387
+;; Last-Updated: Tue Aug 25 11:48:48 2015 (+0900)
+;;           By: 7696122
+;;     Update #: 389
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -88,16 +88,22 @@
 
 (require 'evil)
 (require 'hexrgb)
+(require 'color)
 
 (defgroup evil-terminal-cursor-changer nil
-  "Change cursor shape in terminal for Evil."
+  "Cursor changer for evil on terminal."
+  :group 'cursor
+  :prefix "etcc-")
+
+(defcustom etcc-use-color t
+  "Whether to cursor color."
+  :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
-(defcustom etcc--enable-cursor-color? nil
-  "On/off evil cursor color in Evil.")
-
-(defcustom etcc--enable-blink-cursor? t
-  "On/off blink cursor in Evil")
+(defcustom etcc-use-blink t
+  "Whether to cursor blink."
+  :type 'boolean
+  :group 'evil-terminal-cursor-changer)
 
 (defun etcc--in-dumb? ()
   "Running in dumb."
@@ -127,48 +133,6 @@
   "Running in tmux."
   (getenv "TMUX"))
 
-(defun etcc--get-evil-cursor-color (evil-cursor)
-  "Detect cursor shape in evil-*-state-cursor variable"
-  (if (listp evil-cursor)
-      (dolist (el evil-cursor)
-        (if (stringp el)
-            (return el)))
-    evil-cursor))
-
-(defun etcc--get-evil-cursor-shape (evil-cursor)
-  "Detect cursor shape in evil-*-state-cursor variable"
-  (if (listp evil-cursor)
-      (dolist (el evil-cursor)
-        (if el
-            (if (symbolp el)
-                (return el)
-              (if (consp el)
-                  (return (car el))))))
-    (if (symbolp evil-cursor)
-        evil-cursor
-      (if (or (eq cursor-type t)
-              (not cursor-type))
-          'box
-        cursor-type))))
-
-(defun etcc--color-name-to-hex (name)
-  "Convert color name to hex value."
-  (if (hexrgb-rgb-hex-string-p name)
-      name
-    (let* ((rgb (color-name-to-rgb name))
-           (r (nth 0 rgb))
-           (g (nth 1 rgb))
-           (b (nth 2 rgb)))
-      (color-rgb-to-hex r g b))))
-
-(defun etcc--get-evil-cursor-color-by-hex (evil-cursor)
-  (let ((cursor-background (etcc--get-evil-cursor-color evil-cursor)))
-    (let ((hex-color (etcc--color-name-to-hex cursor-background)))
-      (if (etcc--in-iterm?)
-          (if (string-prefix-p "#" hex-color)
-              (substring hex-color 1))
-        hex-color))))
-
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
   ;; https://github.com/helino/current-gnome-terminal-profile/blob/master/current-gnome-terminal-profile.sh
@@ -183,230 +147,123 @@ echo -n $TERM_PROFILE"))
         (shell-command-to-string cmd))
     "Default"))
 
-;;; Cursor Color
-(defun etcc--get-xterm-cursor-color-string (evil-cursor)
-  (if etcc--enable-cursor-color?
-      ;; https://www.iterm2.com/documentation-escape-codes.html
-      (let ((prefix (if (etcc--in-iterm?)
-                        "\e]Pl"
-                      "\e]12;"))
-            (suffix (if (etcc--in-iterm?)
-                        "\e\\"
-                      "\a")))
-        (concat prefix (etcc--get-evil-cursor-color-by-hex evil-cursor) suffix))))
+(defun etcc--color-name-to-hex (color)
+  "Convert color name to hex value."
+  (if (hexrgb-rgb-hex-string-p color)
+      color
+    (let* ((rgb (color-name-to-rgb color)))
+      (if rgb
+          (let ((r (nth 0 rgb))
+                (g (nth 1 rgb))
+                (b (nth 2 rgb)))
+            (color-rgb-to-hex r g b))))))
 
-;;; Cursor Shape
-(let ((prefix "\e[")
-      (suffix " q"))
-  (defvar etcc--xterm-box-blink-cursor-string 
-    (concat prefix "1" suffix)
-    "The cursor type box(block) in xterm.")
+(defun etcc--make-tmux-seq (seq)
+  "Make escape sequence for tumx."
+  (let ((prefix "\ePtmux;\e")
+        (suffix "\e\\"))
+    (concat prefix seq suffix)
+    (concat prefix seq suffix)
+    (concat prefix seq suffix)))
 
-  (defvar etcc--xterm-box-cursor-string
-    (concat prefix "2" suffix)
-    "The cursor type box(block) in xterm.")
+(defun etcc--make-konsole-cursor-shape-seq (shape)
+  "Make escape sequence for konsole."
+  (let ((prefix	 "\e]50;CursorShape=")
+        (suffix	 "\x7")
+        (box	 "0")
+        (bar     "1")
+        (hbar    "2")
+        (seq     nil))
+    (cond ((eq shape 'box)
+           (setq seq (concat prefix box suffix)))
+          ((eq shape 'bar)
+           (setq seq (concat prefix bar suffix)))
+          ((eq shape 'hbar)
+           (setq seq (concat prefix hbar suffix))))
+    (if (etcc--in-tmux?)
+        (etcc--make-tmux-seq seq)
+      seq)))
 
-  (defvar etcc--xterm-hbar-blink-cursor-string
-    (concat prefix "3" suffix)
-    "The cursor type hbar(underline) in xterm.")
+(defun etcc--make-gnome-terminal-cursor-shape-seq (shape)
+  "Make escape sequence for gnome terminal."
+  (let* ((profile (etcc--get-current-gnome-profile-name))
+         (prefix  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape "
+                         profile))
+         (box     "block")
+         (bar     "ibeam")
+         (hbar    "underline"))
+    (cond ((eq shape 'box)
+           (concat prefix box))
+          ((eq shape 'bar)
+           (concat prefix bar))
+          ((eq shape 'hbar) hbar))))
 
-  (defvar etcc--xterm-hbar-cursor-string
-    (concat prefix "4" suffix)
-    "The cursor type hbar(underline) in xterm.")
+(defun etcc--make-xterm-cursor-shape-seq (shape)
+  "Make escape sequence for XTerm."
+  (let ((prefix		 "\e[")
+        (suffix		 " q")
+        (box-blink	 "1")
+        (box		 "2")
+        (hbar-blink	 "3")
+        (hbar        "4")
+        (bar-blink   "5")
+        (bar         "6"))
+    (cond ((eq shape 'box)
+           (concat prefix (if (and etcc-use-blink blink-cursor) box-blink box) suffix))
+          ((eq shape 'bar)
+           (concat prefix (if (and etcc-use-blink blink-cursor) bar-blink bar) suffix))
+          ((eq shape 'hbar)
+           (concat prefix (if (and etcc-use-blink blink-cursor) hbar-blink hbar) suffix)))))
 
-  (defvar etcc--xterm-bar-blink-cursor-string
-    (concat prefix "5" suffix)
-    "The cursor type bar(ibeam) in xterm.")
+(defun etcc--make-cursor-shape-seq (shape)
+  "Make escape sequence for cursor shape."
+  (cond ((or (etcc--in-xterm?)
+             (etcc--in-iterm?)
+             (etcc--in-apple-terminal?)
+             (etcc--in-dumb?))
+         (etcc--make-xterm-cursor-shape-seq shape))
+        ((etcc--in-konsole?)
+         (etcc--make-konsole-cursor-shape-seq shape))))
 
-  (defvar etcc--xterm-bar-cursor-string
-    (concat prefix "6" suffix)
-    "The cursor type bar(ibeam) in xterm."))
+(defun etcc--make-cursor-color-seq (color)
+  "Make escape sequence for cursor color."
+  (unless (hexrgb-rgb-hex-string-p color)
+    (let* ((hex-color (etcc--color-name-to-hex color)))
+      (if hex-color
+          ;; https://www.iterm2.com/documentation-escape-codes.html
+          (let ((prefix (if (etcc--in-iterm?)
+                            "\e]Pl"
+                          "\e]12;"))
+                (suffix (if (etcc--in-iterm?)
+                            "\e\\"
+                          "\a")))
+            (concat prefix
+                    (if (hexrgb-rgb-hex-string-p hex-color)
+                        hex-color
+                      (etcc--color-name-to-hex color))
+                    suffix))))))
 
-(let ((prefix "\e]50;CursorShape=")
-      (suffix "\x7"))
-  (defvar etcc--iterm-box-cursor-string
-    (concat prefix "0" suffix)
-    "The cursor type box(block) in iTerm.")
+(defun etcc--apply-to-terminal (seq)
+  "Send to escape sequence to terminal."
+  (if (and seq
+           (stringp seq))
+      (send-string-to-terminal seq)))
 
-  (defvar etcc--iterm-bar-cursor-string
-    (concat prefix "1" suffix)
-    "The cursor type bar(ibeam) in iTerm.")
+(defun etcc--evil-set-cursor-color (color)
+  "Set cursor color."
+  (etcc--apply-to-terminal (etcc--make-cursor-color-seq color)))
 
-  (defvar etcc--iterm-hbar-cursor-string 
-    (concat prefix "2" suffix)
-    "The cursor type hbar(underline) in iTerm."))
+(defun etcc--evil-set-cursor ()
+  "Set cursor color type."
+  (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type)))
 
-(let ((prefix "\ePtmux;\e")
-      (suffix "\e\\"))
-  (defvar etcc--tmux-iterm-box-cursor-string
-    (concat prefix etcc--iterm-box-cursor-string suffix)
-    "The cursor type box(block) in iTerm and tmux.")
+(defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
+  (unless (display-graphic-p)
+    (etcc--evil-set-cursor-color arg)))
 
-  (defvar etcc--tmux-iterm-bar-cursor-string
-    (concat prefix etcc--iterm-bar-cursor-string suffix)
-    "The cursor type bar(ibeam) in iTerm and tmux.")
-
-  (defvar etcc--tmux-iterm-hbar-cursor-string
-    (concat prefix etcc--iterm-hbar-cursor-string suffix)
-    "The cursor type hbar(underline) in iTerm and tmux."))
-
-;;; Gnome Terminal
-(defvar etcc--gnome-terminal-set-cursor-string
-  (format "gconftool-2 --type string --set /apps/gnome-terminal/profiles/%s/cursor_shape " 
-          (etcc--get-current-gnome-profile-name))
-  "The gconftool string for changing cursor.")
-
-(defvar etcc--gnome-terminal-bar-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string "ibeam")
-  "The cursor type bar(ibeam) in gnome-terminal.")
-
-(defvar etcc--gnome-terminal-box-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string "block")
-  "The cursor type box(block) in gnome-terminal.")
-
-(defvar etcc--gnome-terminal-hbar-cursor-string
-  (concat etcc--gnome-terminal-set-cursor-string "underline")
-  "The cursor type hbar(underline) in gnome-terminal.")
-
-(defun etcc--set-bar-cursor (evil-cursor)
-  "Set cursor type bar(ibeam)."
-  (if (etcc--in-gnome-terminal?)
-      (with-temp-buffer
-        (shell-command etcc--gnome-terminal-bar-cursor-string t))
-    (if (etcc--in-konsole?)
-        (if (etcc--in-tmux?)
-            (send-string-to-terminal etcc--tmux-iterm-bar-cursor-string)
-          (send-string-to-terminal ;; etcc--iterm-bar-cursor-string
-           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
-                       etcc--xterm-bar-blink-cursor-string
-                     etcc--xterm-bar-cursor-string)
-                   (etcc--get-xterm-cursor-color-string evil-cursor))))
-      (if (or (etcc--in-xterm?)
-              (etcc--in-iterm?)
-              (etcc--in-apple-terminal?)
-              (etcc--in-dumb?))
-          (send-string-to-terminal
-           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
-                       etcc--xterm-bar-blink-cursor-string
-                     etcc--xterm-bar-cursor-string)
-                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
-
-(defun etcc--set-hbar-cursor (evil-cursor)
-  "Set cursor type hbar(underline)."
-  (if (etcc--in-gnome-terminal?)
-      (with-temp-buffer
-        (shell-command etcc--gnome-terminal-hbar-cursor-string t))
-    (if (etcc--in-konsole?)
-        (if (etcc--in-tmux?)
-            (send-string-to-terminal etcc--tmux-iterm-hbar-cursor-string)
-          (send-string-to-terminal etcc--iterm-hbar-cursor-string))
-      (if (or (etcc--in-xterm?)
-              (etcc--in-iterm?)
-              (etcc--in-apple-terminal?)
-              (etcc--in-dumb?))
-          (send-string-to-terminal
-           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
-                       etcc--xterm-hbar-blink-cursor-string
-                     etcc--xterm-hbar-cursor-string)
-                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
-
-(defun etcc--set-box-cursor (evil-cursor)
-  "Set cursor type box(block)."
-  (if (etcc--in-gnome-terminal?)
-      (with-temp-buffer
-        (shell-command etcc--gnome-terminal-box-cursor-string t))
-    (if (etcc--in-konsole?)
-        (if (etcc--in-tmux?)
-            (send-string-to-terminal etcc--tmux-iterm-box-cursor-string)
-          (send-string-to-terminal etcc--iterm-box-cursor-string))
-      (if (or (etcc--in-xterm?)
-              (etcc--in-iterm?)
-              (etcc--in-apple-terminal?)
-              (etcc--in-dumb?))
-          (send-string-to-terminal
-           (concat (if (and etcc--enable-blink-cursor? blink-cursor)
-                       etcc--xterm-box-blink-cursor-string
-                     etcc--xterm-box-cursor-string)
-                   (etcc--get-xterm-cursor-color-string evil-cursor)))))))
-
-(defun etcc--set-cursor-shape (shape evil-cursor)
-  "Set cursor shape."
-  (cond
-   ((eq shape 'box)               (etcc--set-box-cursor evil-cursor))
-   ((eq shape 'evil-half-cursor)  (etcc--set-box-cursor evil-cursor))
-   ((eq shape 'bar)               (etcc--set-bar-cursor evil-cursor))
-   ((eq shape 'hbar)              (etcc--set-hbar-cursor evil-cursor))
-   (t (etcc--set-box-cursor))))
-
-(defun etcc--get-evil-emacs-state-cursor ()         
-  (etcc--get-evil-cursor-shape evil-emacs-state-cursor))
-
-;; (defun etcc--get-evil-evilified-state-cursor ()
-;;   (etcc--get-evil-cursor-shape evil-evilified-state-cursor))
-
-(defun etcc--get-evil-insert-state-cursor ()        
-  (etcc--get-evil-cursor-shape evil-insert-state-cursor))
-
-;; (defun etcc--get-evil-lisp-state-cursor ()
-;;   (etcc--get-evil-cursor-shape evil-lisp-state-cursor))
-
-(defun etcc--get-evil-motion-state-cursor ()
-  (etcc--get-evil-cursor-shape evil-motion-state-cursor))
-
-(defun etcc--get-evil-normal-state-cursor ()
-  (etcc--get-evil-cursor-shape evil-normal-state-cursor))
-
-(defun etcc--get-evil-operator-state-cursor ()
-  (etcc--get-evil-cursor-shape evil-operator-state-cursor))
-
-(defun etcc--get-evil-replace-state-cursor ()
-  (etcc--get-evil-cursor-shape evil-replace-state-cursor))
-
-(defun etcc--get-evil-visual-state-cursor ()
-  (etcc--get-evil-cursor-shape evil-visual-state-cursor))
-
-;; (defun etcc--get-evil-iedit-state-cursor ()
-;;   (etcc--get-evil-cursor-shape evil-iedit-state-cursor))
-
-;; (defun etcc--get-evil-iedit-insert-state-cursor ()
-;;   (etcc--get-evil-cursor-shape evil-iedit-insert-state-cursor))
-
-(defun etcc--set-evil-cursor ()
-  "Set cursor type for Evil."
-  (cond
-   ;; ((evil-evilified-state-p)
-   ;;  (etcc--set-cursor-shape (etcc--get-evil-evilified-state-cursor)))
-   ((evil-insert-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-insert-state-cursor) evil-insert-state-cursor))
-   ;; ((evil-lisp-state-p)
-   ;;  (etcc--set-cursor-shape (etcc--get-evil-lisp-state-cursor)))
-   ((evil-motion-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-motion-state-cursor) evil-motion-state-cursor))
-   ((evil-normal-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-normal-state-cursor) evil-normal-state-cursor))
-   ((evil-operator-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-operator-state-cursor) evil-operator-state-cursor))
-   ((evil-replace-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-replace-state-cursor) evil-replace-state-cursor))
-   ((evil-visual-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-visual-state-cursor) evil-visual-state-cursor))
-   ((evil-emacs-state-p)
-    (etcc--set-cursor-shape (etcc--get-evil-emacs-state-cursor) evil-emacs-state-cursor))
-   ;; ((evil-iedit-state-p)
-   ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-state-cursor)))
-   ;; ((evil-iedit-insert-state-p)
-   ;;  (etcc--set-cursor-shape (etcc--get-evil-iedit-insert-state-cursor)))
-   ))
-
-(add-hook 'post-command-hook 'etcc--set-evil-cursor)
-
-(defun turn-on-evil-terminal-cursor-changer ()
-  (interactive)
-  (add-hook 'post-command-hook 'etcc--set-evil-cursor))
-
-(defun turn-off-evil-terminal-cursor-changer ()
-  (interactive)
-  (remove-hook 'post-command-hook 'etcc--set-evil-cursor))
+(defadvice evil-set-cursor (after etcc--evil-set-cursor (arg) activate)
+  (unless (display-graphic-p)
+    (etcc--evil-set-cursor)))
 
 (provide 'evil-terminal-cursor-changer)
 
