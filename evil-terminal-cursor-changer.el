@@ -265,6 +265,9 @@ echo -n $TERM_PROFILE"))
   (unless (display-graphic-p)
     (etcc--evil-set-cursor)))
 
+(if etcc-use-blink
+    (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
+
 (provide 'evil-terminal-cursor-changer)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
