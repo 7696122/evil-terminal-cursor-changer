@@ -227,26 +227,26 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--make-cursor-color-seq (color)
   "Make escape sequence for cursor color."
-  (unless (hexrgb-rgb-hex-string-p color)
-    (let* ((hex-color (etcc--color-name-to-hex color)))
-      (if hex-color
-          ;; https://www.iterm2.com/documentation-escape-codes.html
-          (let ((prefix (if (etcc--in-iterm?)
-                            "\e]Pl"
-                          "\e]12;"))
-                (suffix (if (etcc--in-iterm?)
-                            "\e\\"
-                          "\a")))
-            (concat prefix
-                    (if (hexrgb-rgb-hex-string-p hex-color)
-                        ;; https://www.iterm2.com/documentation-escape-codes.html
-                        ;; Remove #, rr, gg, bb are 2-digit hex value for iTerm.
-                        (if (and (etcc--in-iterm?)
-                                 (string-prefix-p "#" hex-color))
-                            (substring hex-color 1)
-                          hex-color)
-                      (etcc--color-name-to-hex color))
-                    suffix))))))
+  (let ((hex-color (if (hexrgb-rgb-hex-string-p color)
+                       color
+                     (etcc--color-name-to-hex color))))
+    (if (and hex-color
+             (hexrgb-rgb-hex-string-p hex-color))
+        ;; https://www.iterm2.com/documentation-escape-codes.html
+        (let ((prefix (if (etcc--in-iterm?)
+                          "\e]Pl"
+                        "\e]12;"))
+              (suffix (if (etcc--in-iterm?)
+                          "\e\\"
+                        "\a")))
+          (concat prefix
+                  ;; https://www.iterm2.com/documentation-escape-codes.html
+                  ;; Remove #, rr, gg, bb are 2-digit hex value for iTerm.
+                  (if (and (etcc--in-iterm?)
+                           (string-prefix-p "#" hex-color))
+                      (substring hex-color 1)
+                    hex-color)
+                  suffix)))))
 
 (defun etcc--apply-to-terminal (seq)
   "Send to escape sequence to terminal."
