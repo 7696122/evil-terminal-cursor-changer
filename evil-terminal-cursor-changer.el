@@ -1,4 +1,4 @@
-;;; evil-terminal-cursor-changer.el --- Change cursor shape and color by evil state in terminal
+;;; evil-terminal-cursor-changer.el --- Change cursor shape and color by evil state in terminal  -*- coding: utf-8; -*-
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
 ;; Description: Change cursor shape and color by evil state in terminal.
@@ -260,7 +260,10 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--evil-set-cursor ()
   "Set cursor color type."
-  (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type)))
+  (if (symbolp cursor-type)
+      (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type))
+    (if (listp cursor-type)
+        (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type))))))
 
 (defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
   (unless (display-graphic-p)
