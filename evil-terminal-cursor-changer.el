@@ -8,9 +8,9 @@
 ;; Version: 0.0.4
 ;; Package-Version: 20150819.907
 ;; Package-Requires: ((evil "1.0.8") (hexrgb "21.0"))
-;; Last-Updated: Tue Aug 25 11:48:48 2015 (+0900)
+;; Last-Updated: Wed Aug 26 23:21:36 2015 (+0900)
 ;;           By: 7696122
-;;     Update #: 389
+;;     Update #: 390
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -209,20 +209,20 @@ echo -n $TERM_PROFILE"))
         (bar-blink   "5")
         (bar         "6"))
     (cond ((eq shape 'box)
-           (concat prefix (if (and etcc-use-blink blink-cursor) box-blink box) suffix))
+           (concat prefix (if (and etcc-use-blink blink-cursor-mode) box-blink box) suffix))
           ((eq shape 'bar)
-           (concat prefix (if (and etcc-use-blink blink-cursor) bar-blink bar) suffix))
+           (concat prefix (if (and etcc-use-blink blink-cursor-mode) bar-blink bar) suffix))
           ((eq shape 'hbar)
-           (concat prefix (if (and etcc-use-blink blink-cursor) hbar-blink hbar) suffix)))))
+           (concat prefix (if (and etcc-use-blink blink-cursor-mode) hbar-blink hbar) suffix)))))
 
 (defun etcc--make-cursor-shape-seq (shape)
   "Make escape sequence for cursor shape."
   (cond ((or (etcc--in-xterm?)
-             (etcc--in-iterm?)
              (etcc--in-apple-terminal?)
+             (etcc--in-iterm?)
              (etcc--in-dumb?))
          (etcc--make-xterm-cursor-shape-seq shape))
-        ((etcc--in-konsole?)
+        ((or (etcc--in-konsole?))
          (etcc--make-konsole-cursor-shape-seq shape))))
 
 (defun etcc--make-cursor-color-seq (color)
@@ -239,7 +239,12 @@ echo -n $TERM_PROFILE"))
                           "\a")))
             (concat prefix
                     (if (hexrgb-rgb-hex-string-p hex-color)
-                        hex-color
+                        ;; https://www.iterm2.com/documentation-escape-codes.html
+                        ;; Remove #, rr, gg, bb are 2-digit hex value for iTerm.
+                        (if (and (etcc--in-iterm?)
+                                 (string-prefix-p "#" hex-color))
+                            (substring hex-color 1)
+                          hex-color)
                       (etcc--color-name-to-hex color))
                     suffix))))))
 
