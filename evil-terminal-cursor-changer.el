@@ -219,11 +219,12 @@ echo -n $TERM_PROFILE"))
   "Make escape sequence for cursor shape."
   (cond ((or (etcc--in-xterm?)
              (etcc--in-apple-terminal?)
-             (etcc--in-iterm?)
-             (etcc--in-dumb?))
+             (etcc--in-iterm?))
          (etcc--make-xterm-cursor-shape-seq shape))
-        ((or (etcc--in-konsole?))
-         (etcc--make-konsole-cursor-shape-seq shape))))
+        ((etcc--in-konsole?)
+         (etcc--make-konsole-cursor-shape-seq shape))
+        ((etcc--in-dumb?)
+         (etcc--make-xterm-cursor-shape-seq shape))))
 
 (defun etcc--make-cursor-color-seq (color)
   "Make escape sequence for cursor color."
@@ -274,7 +275,7 @@ echo -n $TERM_PROFILE"))
     (etcc--evil-set-cursor)))
 
 (if etcc-use-blink
-    (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
+    (add-hook #'blink-cursor-mode-hook #'etcc--evil-set-cursor))
 
 (provide 'evil-terminal-cursor-changer)
 
