@@ -7,7 +7,7 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.4
 ;; Package-Version: 20150819.907
-;; Package-Requires: ((evil "1.0.8") (hexrgb "21.0"))
+;; Package-Requires: ((evil "1.0.8"))
 ;; Last-Updated: Wed Aug 26 23:21:36 2015 (+0900)
 ;;           By: 7696122
 ;;     Update #: 390
@@ -87,7 +87,6 @@
 ;;; Code:
 
 (require 'evil)
-(require 'hexrgb)
 (require 'color)
 
 (defgroup evil-terminal-cursor-changer nil
@@ -149,14 +148,7 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--color-name-to-hex (color)
   "Convert color name to hex value."
-  (if (hexrgb-rgb-hex-string-p color)
-      color
-    (let* ((rgb (color-name-to-rgb color)))
-      (if rgb
-          (let ((r (nth 0 rgb))
-                (g (nth 1 rgb))
-                (b (nth 2 rgb)))
-            (color-rgb-to-hex r g b))))))
+  (apply 'color-rgb-to-hex (color-name-to-rgb color)))
 
 (defun etcc--make-tmux-seq (seq)
   "Make escape sequence for tumx."
@@ -228,11 +220,8 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--make-cursor-color-seq (color)
   "Make escape sequence for cursor color."
-  (let ((hex-color (if (hexrgb-rgb-hex-string-p color)
-                       color
-                     (etcc--color-name-to-hex color))))
-    (if (and hex-color
-             (hexrgb-rgb-hex-string-p hex-color))
+  (let ((hex-color (etcc--color-name-to-hex color)))
+    (if hex-color
         ;; https://www.iterm2.com/documentation-escape-codes.html
         (let ((prefix (if (etcc--in-iterm?)
                           "\e]Pl"
