@@ -257,6 +257,8 @@ echo -n $TERM_PROFILE"))
     (if (listp cursor-type)
         (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type))))))
 
+(add-hook 'post-command-hook 'etcc--evil-set-cursor)
+
 (defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
   (unless (display-graphic-p)
     (etcc--evil-set-cursor-color arg)))
