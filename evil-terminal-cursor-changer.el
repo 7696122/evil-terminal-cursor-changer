@@ -47,9 +47,11 @@
 ;;
 ;; If want change cursor shape type, add below line. This is evil's setting.
 ;;
-;;      (setq evil-visual-state-cursor '("red" box)); █
-;;      (setq evil-insert-state-cursor '("green" bar)); ⎸
-;;      (setq evil-emacs-state-cursor '("blue" hbar)); _
+;;      (setq evil-normal-state-cursor 'box)  ; █
+;;      (setq evil-motion-state-cursor 'box)  ; █
+;;      (setq evil-visual-state-cursor 'box)  ; █
+;;      (setq evil-insert-state-cursor 'bar)  ; ⎸
+;;      (setq evil-emacs-state-cursor  'hbar) ; _
 ;;
 ;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
 ;; X), Konsole(KDE Desktop), dumb(etc. mintty), Apple
