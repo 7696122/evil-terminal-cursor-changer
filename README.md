@@ -20,14 +20,10 @@ When running in terminal, It's especially helpful to recognize evil's state.
 
 3. Add code to your emacs config file:（for example: ~/.emacs）：
 
-For Only terminal
-
          (unless (display-graphic-p)
-                 (require 'evil-terminal-cursor-changer))
-
-For All
-
-         (require 'evil-terminal-cursor-changer)
+                 (require 'evil-terminal-cursor-changer)
+                 (evil-terminal-cursor-changer-activate) ; or (etcc-on)
+                 )
 
 If want change cursor shape type, add below line. This is evil's setting.
 
