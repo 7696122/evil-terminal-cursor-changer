@@ -36,20 +36,16 @@
 ;;
 ;; 3. Add code to your emacs config file:（for example: ~/.emacs）：
 ;;
-;; For Only terminal
-;;
 ;;      (unless (display-graphic-p)
-;;              (require 'evil-terminal-cursor-changer))
-;;
-;; For All
-;;
-;;      (require 'evil-terminal-cursor-changer)
+;;              (require 'evil-terminal-cursor-changer)
+;;              (evil-terminal-cursor-changer-activate) ; or (etcc-on)
+;;              )
 ;;
 ;; If want change cursor shape type, add below line. This is evil's setting.
 ;;
-;;      (setq evil-normal-state-cursor 'box)  ; █
 ;;      (setq evil-motion-state-cursor 'box)  ; █
 ;;      (setq evil-visual-state-cursor 'box)  ; █
+;;      (setq evil-normal-state-cursor 'box)  ; █
 ;;      (setq evil-insert-state-cursor 'bar)  ; ⎸
 ;;      (setq evil-emacs-state-cursor  'hbar) ; _
 ;;
@@ -96,7 +92,7 @@
   :group 'cursor
   :prefix "etcc-")
 
-(defcustom etcc-use-color t
+(defcustom etcc-use-color nil
   "Whether to cursor color."
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
@@ -257,18 +253,45 @@ echo -n $TERM_PROFILE"))
     (if (listp cursor-type)
         (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type))))))
 
-(add-hook 'post-command-hook 'etcc--evil-set-cursor)
+;; (defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
+;;   (unless (display-graphic-p)
+;;     (etcc--evil-set-cursor-color arg)))
 
-(defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
-  (unless (display-graphic-p)
-    (etcc--evil-set-cursor-color arg)))
+;; (defadvice evil-set-cursor (after etcc--evil-set-cursor (arg) activate)
+;;   (unless (display-graphic-p)
+;;     (etcc--evil-set-cursor)))
 
-(defadvice evil-set-cursor (after etcc--evil-set-cursor (arg) activate)
-  (unless (display-graphic-p)
-    (etcc--evil-set-cursor)))
+;;;###autoload
+(defun evil-terminal-cursor-changer-activate ()
+  "Enable evil terminal cursor changer."
+  (interactive)
+  (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
+  (add-hook 'pre-command-hook 'etcc--evil-set-cursor)
+  (add-hook 'post-command-hook 'etcc--evil-set-cursor)
+  ;; (ad-activate 'evil-set-cursor)
+  ;; (advice-add 'evil-set-cursor :after 'etcc--evil-set-cursor)
+  ;; (advice-add 'evil-set-cursor :after #'etcc--evil-set-cursor)
+  ;; (advice-add 'evil-set-cursor-color :after #'etcc--evil-set-cursor-color)
+  )
 
-(if etcc-use-blink
-    (add-hook #'blink-cursor-mode-hook #'etcc--evil-set-cursor))
+;;;###autoload
+(defalias 'etcc-on 'evil-terminal-cursor-changer-activate)
+
+;;;###autoload
+(defun evil-terminal-cursor-changer-deactivate ()
+  "Disable evil terminal cursor changer."
+  (interactive)
+  (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--evil-set-cursor))
+  (remove-hook 'pre-command-hook 'etcc--evil-set-cursor)
+  (remove-hook 'post-command-hook 'etcc--evil-set-cursor)
+  ;; (ad-deactivate 'evil-set-cursor)
+  ;; (advice-remove 'evil-set-cursor 'etcc--evil-set-cursor)
+  ;; (advice-add 'evil-set-cursor 'etcc--evil-set-cursor)
+  ;; (advice-remove 'evil-set-cursor-color 'etcc--evil-set-cursor-color)
+  )
+
+;;;###autoload
+(defalias 'etcc-off 'evil-terminal-cursor-changer-deactivate)
 
 (provide 'evil-terminal-cursor-changer)
 
