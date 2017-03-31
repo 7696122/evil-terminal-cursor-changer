@@ -248,10 +248,11 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--evil-set-cursor ()
   "Set cursor color type."
-  (if (symbolp cursor-type)
-      (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type))
-    (if (listp cursor-type)
-        (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type))))))
+  (unless (display-graphic-p)
+    (if (symbolp cursor-type)
+        (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type))
+      (if (listp cursor-type)
+          (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type)))))))
 
 ;; (defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
 ;;   (unless (display-graphic-p)
