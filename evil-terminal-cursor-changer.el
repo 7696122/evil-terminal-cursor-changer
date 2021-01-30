@@ -149,12 +149,12 @@ echo -n $TERM_PROFILE"))
   (apply 'color-rgb-to-hex (color-name-to-rgb color)))
 
 (defun etcc--make-tmux-seq (seq)
-  "Make escape sequence for tumx."
-  (let ((prefix "\ePtmux;\e")
-        (suffix "\e\\"))
-    (concat prefix seq suffix)
-    (concat prefix seq suffix)
-    (concat prefix seq suffix)))
+  "Make escape sequence for tmux."
+  ;; (let ((prefix "\ePtmux;\e")
+  ;;       (suffix "\e\\"))
+  ;;   (concat prefix seq suffix))
+  seq
+  )
 
 (defun etcc--make-konsole-cursor-shape-seq (shape)
   "Make escape sequence for konsole."
@@ -190,14 +190,15 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--make-xterm-cursor-shape-seq (shape)
   "Make escape sequence for XTerm."
-  (let ((prefix      "\e[")
-        (suffix      " q")
-        (box-blink   "1")
-        (box         "2")
-        (hbar-blink  "3")
-        (hbar        "4")
-        (bar-blink   "5")
-        (bar         "6"))
+  (let ((prefix     "\e[")
+        (suffix     " q")
+        (box-blink  "1")
+        (box        "2")
+        (hbar-blink "3")
+        (hbar       "4")
+        (bar-blink  "5")
+        (bar        "6")
+        (seq        nil))
     (cond ((eq shape 'box)
            (setq seq (concat prefix (if (and etcc-use-blink blink-cursor-mode) box-blink box) suffix)))
           ((eq shape 'bar)
@@ -245,11 +246,11 @@ echo -n $TERM_PROFILE"))
            (stringp seq))
       (send-string-to-terminal seq)))
 
-(defun etcc--evil-set-cursor-color (color)
+(defun etcc--evil-set-cursor-color (color &rest _)
   "Set cursor color."
   (etcc--apply-to-terminal (etcc--make-cursor-color-seq color)))
 
-(defun etcc--evil-set-cursor ()
+(defun etcc--evil-set-cursor (&rest _)
   "Set cursor color type."
   (unless (display-graphic-p)
     (if (symbolp cursor-type)
@@ -270,12 +271,8 @@ echo -n $TERM_PROFILE"))
   "Enable evil terminal cursor changer."
   (interactive)
   (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
-  (add-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (add-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-activate 'evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after #'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor-color :after #'etcc--evil-set-cursor-color)
+  (advice-add 'evil-set-cursor :after #'etcc--evil-set-cursor)
+  (advice-add 'evil-set-cursor-color :after #'etcc--evil-set-cursor-color)
   )
 
 ;;;###autoload
@@ -286,16 +283,21 @@ echo -n $TERM_PROFILE"))
   "Disable evil terminal cursor changer."
   (interactive)
   (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--evil-set-cursor))
-  (remove-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (remove-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-deactivate 'evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor-color 'etcc--evil-set-cursor-color)
+  (advice-remove 'evil-set-cursor #'etcc--evil-set-cursor)
+  (advice-remove 'evil-set-cursor-color #'etcc--evil-set-cursor-color)
   )
 
 ;;;###autoload
 (defalias 'etcc-off 'evil-terminal-cursor-changer-deactivate)
+
+;;;###autoload
+(define-minor-mode etcc-mode
+  "Minor mode for changing cursor by mode for evil on terminal."
+  :global t
+  :lighter " etcc"
+  (if etcc-mode
+      (etcc-on)
+    (etcc-off)))
 
 (provide 'evil-terminal-cursor-changer)
 
