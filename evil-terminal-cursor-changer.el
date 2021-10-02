@@ -248,9 +248,10 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--apply-to-terminal (seq)
   "Send to escape sequence to terminal."
-  (if (and seq
-           (stringp seq))
-      (send-string-to-terminal seq)))
+  (when (and seq
+             (stringp seq)
+             (not (display-graphic-p)))
+    (send-string-to-terminal seq)))
 
 (defun etcc--evil-set-cursor-color (color &rest _)
   "Set cursor color."
