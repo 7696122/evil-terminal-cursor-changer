@@ -259,7 +259,7 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--evil-set-cursor (&rest _)
   "Set cursor color type."
-  (unless (display-graphic-p)
+  (unless (or (display-graphic-p) noninteractive)
     (if (symbolp cursor-type)
         (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type))
       (if (listp cursor-type)
