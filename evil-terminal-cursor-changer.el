@@ -102,29 +102,48 @@
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
+(defcustom etcc-term-type-override nil
+  "The type of terminal sequence to send.
+
+Set this if your terminal is not correctly detected."
+  :type `(choice (const :tag "(Autodetect)" ,nil)
+                 (const :tag "Dumb" dumb)
+                 (const :tag "Xterm" xterm)
+                 (const :tag "iTerm" iterm)
+                 (const :tag "Gnome Terminal" gnome)
+                 (const :tag "Konsole" konsole)
+                 (const :tag "Apple Terminal" apple))
+  :group 'evil-terminal-cursor-changer)
+
 (defun etcc--in-dumb? ()
   "Running in dumb."
-  (string= (getenv "TERM") "dumb"))
+  (or (eq etcc-term-type-override 'dumb)
+      (string= (getenv "TERM") "dumb")))
 
 (defun etcc--in-iterm? ()
   "Running in iTerm."
-  (string= (getenv "TERM_PROGRAM") "iTerm.app"))
+  (or (eq etcc-term-type-override 'iterm)
+      (string= (getenv "TERM_PROGRAM") "iTerm.app")))
 
 (defun etcc--in-xterm? ()
   "Runing in xterm."
-  (getenv "XTERM_VERSION"))
+  (or (eq etcc-term-type-override 'xterm)
+      (getenv "XTERM_VERSION")))
 
 (defun etcc--in-gnome-terminal? ()
   "Running in gnome-terminal."
-  (string= (getenv "COLORTERM") "gnome-terminal"))
+  (or (eq etcc-term-type-override 'gnome)
+      (string= (getenv "COLORTERM") "gnome-terminal")))
 
 (defun etcc--in-konsole? ()
   "Running in konsole."
-  (getenv "KONSOLE_PROFILE_NAME"))
+  (or (eq etcc-term-type-override 'konsole)
+      (getenv "KONSOLE_PROFILE_NAME")))
 
 (defun etcc--in-apple-terminal? ()
-  "Running in Apple Terminal"
-  (string= (getenv "TERM_PROGRAM") "Apple_Terminal"))
+  "Running in Apple Terminal."
+  (or (eq etcc-term-type-override 'apple)
+      (string= (getenv "TERM_PROGRAM") "Apple_Terminal")))
 
 (defun etcc--in-tmux? ()
   "Running in tmux."
