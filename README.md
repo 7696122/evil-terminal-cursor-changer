@@ -42,6 +42,12 @@ plus(https://github.com/saitoha/mouseterm-plus/releases) to use
 evil-terminal-cursor-changer. That makes to support VT's DECSCUSR
 sequence.
 
+If your terminal is not correctly detected, but you know that the escape
+sequences used for one of the supported terminals will work, you can override
+the terminal detection by setting `etcc-term-type-override`, which is available
+to set interactively in the `customize` facility (run `M-x customize-group RET
+evil-terminal-cursor-changer RET`).
+
 ## Change Log
 
 This program is free software; you can redistribute it and/or
