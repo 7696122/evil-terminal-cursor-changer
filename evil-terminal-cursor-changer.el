@@ -7,10 +7,10 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.4
 ;; Package-Version: 20150819.907
-;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Wed Aug 26 23:21:36 2015 (+0900)
+;; Package-Requires: ()
+;; Last-Updated: Sat May 14 11:56:23 2022 (+0900)
 ;;           By: 7696122
-;;     Update #: 390
+;;     Update #: 392
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -84,7 +84,6 @@
 ;;
 ;;; Code:
 
-(require 'evil)
 (require 'color)
 
 (defgroup evil-terminal-cursor-changer nil
@@ -295,12 +294,7 @@ echo -n $TERM_PROFILE"))
   (interactive)
   (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
   (add-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (add-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-activate 'evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after #'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor-color :after #'etcc--evil-set-cursor-color)
-  )
+  (add-hook 'post-command-hook 'etcc--evil-set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-on 'evil-terminal-cursor-changer-activate)
@@ -311,26 +305,11 @@ echo -n $TERM_PROFILE"))
   (interactive)
   (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--evil-set-cursor))
   (remove-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (remove-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-deactivate 'evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor-color 'etcc--evil-set-cursor-color)
-  )
+  (remove-hook 'post-command-hook 'etcc--evil-set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-off 'evil-terminal-cursor-changer-deactivate)
 
-;;;###autoload
-(define-minor-mode etcc-mode
-  "Minor mode for changing cursor by mode for evil on terminal."
-  :global t
-  :lighter " etcc"
-  (if etcc-mode
-      (etcc-on)
-    (etcc-off)))
-
 (provide 'evil-terminal-cursor-changer)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; evil-terminal-cursor-changer.el ends here
