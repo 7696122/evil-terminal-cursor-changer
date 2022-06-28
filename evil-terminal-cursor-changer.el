@@ -7,10 +7,10 @@
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.4
 ;; Package-Version: 20150819.907
-;; Package-Requires: ((evil "1.0.8"))
-;; Last-Updated: Wed Aug 26 23:21:36 2015 (+0900)
+;; Package-Requires: ()
+;; Last-Updated: Sat May 14 11:56:23 2022 (+0900)
 ;;           By: 7696122
-;;     Update #: 390
+;;     Update #: 393
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
 ;; Keywords: evil, terminal, cursor
@@ -84,7 +84,6 @@
 ;;
 ;;; Code:
 
-(require 'evil)
 (require 'color)
 
 (defgroup evil-terminal-cursor-changer nil
@@ -102,29 +101,48 @@
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
+(defcustom etcc-term-type-override nil
+  "The type of terminal sequence to send.
+
+Set this if your terminal is not correctly detected."
+  :type `(choice (const :tag "(Autodetect)" ,nil)
+                 (const :tag "Dumb" dumb)
+                 (const :tag "Xterm" xterm)
+                 (const :tag "iTerm" iterm)
+                 (const :tag "Gnome Terminal" gnome)
+                 (const :tag "Konsole" konsole)
+                 (const :tag "Apple Terminal" apple))
+  :group 'evil-terminal-cursor-changer)
+
 (defun etcc--in-dumb? ()
   "Running in dumb."
-  (string= (getenv "TERM") "dumb"))
+  (or (eq etcc-term-type-override 'dumb)
+      (string= (getenv "TERM") "dumb")))
 
 (defun etcc--in-iterm? ()
   "Running in iTerm."
-  (string= (getenv "TERM_PROGRAM") "iTerm.app"))
+  (or (eq etcc-term-type-override 'iterm)
+      (string= (getenv "TERM_PROGRAM") "iTerm.app")))
 
 (defun etcc--in-xterm? ()
   "Runing in xterm."
-  (getenv "XTERM_VERSION"))
+  (or (eq etcc-term-type-override 'xterm)
+      (getenv "XTERM_VERSION")))
 
 (defun etcc--in-gnome-terminal? ()
   "Running in gnome-terminal."
-  (string= (getenv "COLORTERM") "gnome-terminal"))
+  (or (eq etcc-term-type-override 'gnome)
+      (string= (getenv "COLORTERM") "gnome-terminal")))
 
 (defun etcc--in-konsole? ()
   "Running in konsole."
-  (getenv "KONSOLE_PROFILE_NAME"))
+  (or (eq etcc-term-type-override 'konsole)
+      (getenv "KONSOLE_PROFILE_NAME")))
 
 (defun etcc--in-apple-terminal? ()
-  "Running in Apple Terminal"
-  (string= (getenv "TERM_PROGRAM") "Apple_Terminal"))
+  "Running in Apple Terminal."
+  (or (eq etcc-term-type-override 'apple)
+      (string= (getenv "TERM_PROGRAM") "Apple_Terminal")))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
@@ -143,14 +161,6 @@ echo -n $TERM_PROFILE"))
 (defun etcc--color-name-to-hex (color)
   "Convert color name to hex value."
   (apply 'color-rgb-to-hex (color-name-to-rgb color)))
-
-(defun etcc--make-tmux-seq (seq)
-  "Make escape sequence for tumx."
-  (let ((prefix "\ePtmux;\e")
-        (suffix "\e\\"))
-    (concat prefix seq suffix)
-    (concat prefix seq suffix)
-    (concat prefix seq suffix)))
 
 (defun etcc--make-konsole-cursor-shape-seq (shape)
   "Make escape sequence for konsole."
@@ -239,9 +249,10 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--apply-to-terminal (seq)
   "Send to escape sequence to terminal."
-  (if (and seq
-           (stringp seq))
-      (send-string-to-terminal seq)))
+  (when (and seq
+             (stringp seq)
+             (not (display-graphic-p)))
+    (send-string-to-terminal seq)))
 
 (defun etcc--evil-set-cursor-color (color)
   "Set cursor color."
@@ -269,12 +280,7 @@ echo -n $TERM_PROFILE"))
   (interactive)
   (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
   (add-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (add-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-activate 'evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor :after #'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor-color :after #'etcc--evil-set-cursor-color)
-  )
+  (add-hook 'post-command-hook 'etcc--evil-set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-on 'evil-terminal-cursor-changer-activate)
@@ -285,17 +291,11 @@ echo -n $TERM_PROFILE"))
   (interactive)
   (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--evil-set-cursor))
   (remove-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (remove-hook 'post-command-hook 'etcc--evil-set-cursor)
-  ;; (ad-deactivate 'evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-add 'evil-set-cursor 'etcc--evil-set-cursor)
-  ;; (advice-remove 'evil-set-cursor-color 'etcc--evil-set-cursor-color)
-  )
+  (remove-hook 'post-command-hook 'etcc--evil-set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-off 'evil-terminal-cursor-changer-deactivate)
 
 (provide 'evil-terminal-cursor-changer)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; evil-terminal-cursor-changer.el ends here
