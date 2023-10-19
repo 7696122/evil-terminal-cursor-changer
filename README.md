@@ -34,7 +34,7 @@ If want change cursor shape type, add below line. This is evil's setting.
          (setq evil-emacs-state-cursor  'hbar) ; _
 
 Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
-X), Konsole(KDE Desktop), dumb(etc. mintty), Apple
+X), Konsole(KDE Desktop), dumb(etc. mintty), Kitty, Apple
 Terminal.app(restrictive supporting). If using Apple Terminal.app,
 must install SIMBL(http://www.culater.net/software/SIMBL/SIMBL.php)
 and MouseTerm
