@@ -112,7 +112,8 @@ Set this if your terminal is not correctly detected."
                  (const :tag "Gnome Terminal" gnome)
                  (const :tag "Konsole" konsole)
                  (const :tag "Apple Terminal" apple)
-		 (const :tag "Kitty" kitty))
+		 (const :tag "Kitty" kitty)
+		 (const :tag "Ghostty" ghostty))
   :group 'evil-terminal-cursor-changer)
 
 (defun etcc--in-dumb? ()
@@ -149,6 +150,11 @@ Set this if your terminal is not correctly detected."
   "Running in Kitty."
   (or (eq etcc-term-type-override 'kitty)
       (getenv "KITTY_PID")))
+
+(defun etcc--in-ghostty? ()
+  "Running in Ghostty."
+  (or (eq etcc-term-type-override 'ghostty)
+      (getenv "GHOSTTY_BIN_DIR")))
 
 (defun etcc--get-current-gnome-profile-name ()
   "Return Current profile name of Gnome Terminal."
@@ -227,7 +233,8 @@ echo -n $TERM_PROFILE"))
   (cond ((or (etcc--in-xterm?)
              (etcc--in-apple-terminal?)
              (etcc--in-iterm?)
-	     (etcc--in-kitty?))
+	     (etcc--in-kitty?)
+	     (etcc--in-ghostty?))
          (etcc--make-xterm-cursor-shape-seq shape))
         ((etcc--in-konsole?)
          (etcc--make-konsole-cursor-shape-seq shape))
