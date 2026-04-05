@@ -1,7 +1,7 @@
-;;; evil-terminal-cursor-changer.el --- Change cursor shape and color by evil state in terminal  -*- lexical-binding: t; coding: utf-8; -*-
+;;; evil-terminal-cursor-changer.el --- Change cursor shape and color in terminal  -*- lexical-binding: t; coding: utf-8; -*-
 ;;
 ;; Filename: evil-terminal-cursor-changer.el
-;; Description: Change cursor shape and color by evil state in terminal.
+;; Description: Change cursor shape and color in terminal Emacs.
 ;; Author: 7696122
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
@@ -13,7 +13,7 @@
 ;;     Update #: 393
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
 ;; Doc URL: https://github.com/7696122/evil-terminal-cursor-changer/blob/master/README.md
-;; Keywords: evil, terminal, cursor
+;; Keywords: terminal, cursor, evil
 ;; Compatibility: GNU Emacs: 24.x
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -24,9 +24,12 @@
 
 ;; ## Introduce ##
 ;;
-;; evil-terminal-cursor-changer is changing cursor shape and color by evil state for evil-mode.
+;; evil-terminal-cursor-changer changes cursor shape and color in terminal Emacs.
+;; It works with any package that sets `cursor-type' (e.g. evil-mode, meow, etc.)
+;; or can be used standalone.
 ;;
-;; When running in terminal, It's especially helpful to recognize evil's state.
+;; When running in terminal, it's especially helpful to recognize the current
+;; editing state.
 ;;
 ;; ## Install ##
 ;;
@@ -34,14 +37,17 @@
 ;;
 ;; 2. M-x package-install RET evil-terminal-cursor-changer RET
 ;;
-;; 3. Add code to your emacs config file:（for example: ~/.emacs）：
+;; 3. Add code to your emacs config file (e.g. ~/.emacs):
 ;;
 ;;      (unless (display-graphic-p)
 ;;              (require 'evil-terminal-cursor-changer)
 ;;              (evil-terminal-cursor-changer-activate) ; or (etcc-on)
 ;;              )
 ;;
-;; If want change cursor shape type, add below line. This is evil's setting.
+;; ## With evil-mode ##
+;;
+;; evil-mode sets `cursor-type' automatically per state, so etcc works out of
+;; the box. You can customize the shapes via evil's variables:
 ;;
 ;;      (setq evil-motion-state-cursor 'box)  ; █
 ;;      (setq evil-visual-state-cursor 'box)  ; █
@@ -49,14 +55,16 @@
 ;;      (setq evil-insert-state-cursor 'bar)  ; ⎸
 ;;      (setq evil-emacs-state-cursor  'hbar) ; _
 ;;
-;; Now, works in XTerm, Gnome Terminal(Gnome Desktop), iTerm(Mac OS
-;; X), Konsole(KDE Desktop), dumb(etc. mintty), Apple
-;; Terminal.app(restrictive supporting). If using Apple Terminal.app,
-;; must install SIMBL(http://www.culater.net/software/SIMBL/SIMBL.php)
-;; and MouseTerm
-;; plus(https://github.com/saitoha/mouseterm-plus/releases) to use
-;; evil-terminal-cursor-changer. That makes to support VT's DECSCUSR
-;; sequence.
+;; ## Without evil-mode ##
+;;
+;; Set `cursor-type' directly and etcc will apply it in the terminal:
+;;
+;;      (setq cursor-type 'bar)   ; ⎸ insert-style
+;;      (setq cursor-type 'box)   ; █ normal-style
+;;      (setq cursor-type 'hbar)  ; _ underline-style
+;;
+;; Now, works in XTerm, Gnome Terminal, iTerm2, Konsole, dumb (e.g. mintty),
+;; Kitty, and Apple Terminal.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -87,7 +95,7 @@
 (require 'color)
 
 (defgroup evil-terminal-cursor-changer nil
-  "Cursor changer for evil on terminal."
+  "Cursor changer for terminal Emacs."
   :group 'cursor
   :prefix "etcc-")
 
@@ -166,7 +174,9 @@ echo -n $TERM_PROFILE"))
 
 (defun etcc--color-name-to-hex (color)
   "Convert color name to hex value."
-  (apply 'color-rgb-to-hex (color-name-to-rgb color)))
+  (let ((rgb (color-name-to-rgb color)))
+    (when rgb
+      (apply 'color-rgb-to-hex rgb))))
 
 (defun etcc--make-konsole-cursor-shape-seq (shape)
   "Make escape sequence for konsole."
@@ -261,44 +271,38 @@ echo -n $TERM_PROFILE"))
              (not (display-graphic-p)))
     (send-string-to-terminal seq)))
 
-(defun etcc--evil-set-cursor-color (color)
+(defun etcc--set-cursor-color (color)
   "Set cursor color."
   (etcc--apply-to-terminal (etcc--make-cursor-color-seq color)))
 
-(defun etcc--evil-set-cursor ()
-  "Set cursor color type."
+(defun etcc--set-cursor ()
+  "Set cursor shape based on `cursor-type'."
   (unless (display-graphic-p)
     (if (symbolp cursor-type)
         (etcc--apply-to-terminal (etcc--make-cursor-shape-seq cursor-type))
       (if (listp cursor-type)
           (etcc--apply-to-terminal (etcc--make-cursor-shape-seq (car cursor-type)))))))
 
-;; (defadvice evil-set-cursor-color (after etcc--evil-set-cursor (arg) activate)
-;;   (unless (display-graphic-p)
-;;     (etcc--evil-set-cursor-color arg)))
-
-;; (defadvice evil-set-cursor (after etcc--evil-set-cursor (arg) activate)
-;;   (unless (display-graphic-p)
-;;     (etcc--evil-set-cursor)))
+;; Hook references updated to use etcc--set-cursor.
 
 ;;;###autoload
 (defun evil-terminal-cursor-changer-activate ()
-  "Enable evil terminal cursor changer."
+  "Enable terminal cursor changer."
   (interactive)
-  (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--evil-set-cursor))
-  (add-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (add-hook 'post-command-hook 'etcc--evil-set-cursor))
+  (if etcc-use-blink (add-hook 'blink-cursor-mode-hook #'etcc--set-cursor))
+  (add-hook 'pre-command-hook 'etcc--set-cursor)
+  (add-hook 'post-command-hook 'etcc--set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-on 'evil-terminal-cursor-changer-activate)
 
 ;;;###autoload
 (defun evil-terminal-cursor-changer-deactivate ()
-  "Disable evil terminal cursor changer."
+  "Disable terminal cursor changer."
   (interactive)
-  (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--evil-set-cursor))
-  (remove-hook 'pre-command-hook 'etcc--evil-set-cursor)
-  (remove-hook 'post-command-hook 'etcc--evil-set-cursor))
+  (if etcc-use-blink (remove-hook 'blink-cursor-mode-hook 'etcc--set-cursor))
+  (remove-hook 'pre-command-hook 'etcc--set-cursor)
+  (remove-hook 'post-command-hook 'etcc--set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-off 'evil-terminal-cursor-changer-deactivate)
