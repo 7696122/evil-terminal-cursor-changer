@@ -1,0 +1,90 @@
+#+TITLE: evil-terminal-cursor-changer
+#+SUBTITLE: Change cursor shape and color in terminal Emacs
+#+AUTHOR: 7696122
+#+LANGUAGE: en
+
+[[http://melpa.org/#/evil-terminal-cursor-changer][file:http://melpa.org/packages/evil-terminal-cursor-changer-badge.svg]]
+
+Change cursor shape and color when running Emacs in a terminal.
+Reads the standard ~cursor-type~ variable and sends the appropriate
+escape sequences to your terminal emulator.
+
+Works with any package that sets ~cursor-type~ -- evil-mode, meow,
+ryo-modal, and others -- or standalone.
+
+* Install
+
+1. Configure MELPA: http://melpa.org/#/getting-started
+2. ~M-x package-install RET evil-terminal-cursor-changer RET~
+3. Add to your Emacs config:
+
+#+BEGIN_SRC elisp
+  (unless (display-graphic-p)
+    (require 'evil-terminal-cursor-changer)
+    (etcc-on))
+#+END_SRC
+
+* With evil-mode
+
+evil-mode sets ~cursor-type~ automatically per state, so etcc works
+out of the box.  Customize shapes via evil's variables:
+
+#+BEGIN_SRC elisp
+  (setq evil-motion-state-cursor 'box)  ; █
+  (setq evil-visual-state-cursor 'box)  ; █
+  (setq evil-normal-state-cursor 'box)  ; █
+  (setq evil-insert-state-cursor 'bar)  ; ⎸
+  (setq evil-emacs-state-cursor  'hbar) ; _
+#+END_SRC
+
+* Without evil-mode
+
+Set ~cursor-type~ directly and etcc will send the corresponding
+terminal escape sequence:
+
+#+BEGIN_SRC elisp
+  (setq cursor-type 'bar)   ; ⎸ vertical bar
+  (setq cursor-type 'box)   ; █ block
+  (setq cursor-type 'hbar)  ; _ underline
+#+END_SRC
+
+* Supported Terminals
+
+All terminals use standard DECSCUSR sequences for cursor shape
+and OSC 12 for cursor color.
+
+| Terminal          | Detection method                            |
+|-------------------+---------------------------------------------|
+| XTerm             | ~$XTERM_VERSION~                            |
+| iTerm2            | ~$TERM_PROGRAM = iTerm.app~                 |
+| Kitty             | ~$KITTY_PID~                                |
+| Konsole           | ~$KONSOLE_PROFILE_NAME~                     |
+| Apple Terminal    | ~$TERM_PROGRAM = Apple_Terminal~            |
+| Alacritty         | ~$TERM~ starts with ~alacritty~ or ~$ALACRITTY_WINDOW_ID~ |
+| WezTerm           | ~$TERM_PROGRAM = WezTerm~                   |
+| Windows Terminal  | ~$WT_SESSION~                               |
+| foot              | ~$TERM~ starts with ~foot~                  |
+| Ghostty           | ~$TERM_PROGRAM = ghostty~ or ~$GHOSTTY_BIN_DIR~ |
+| Hyper             | ~$TERM_PROGRAM = Hyper~                     |
+| Rio               | ~$TERM_PROGRAM = Rio~                       |
+| Tabby             | ~$TERM_PROGRAM = Tabby~                     |
+| Gnome Terminal    | ~$COLORTERM~ (gnome-terminal, kgx, terminator) |
+| Dumb (mintty etc) | ~$TERM = dumb~                              |
+
+If your terminal is not correctly detected, override it:
+
+~M-x customize-group RET evil-terminal-cursor-changer RET~
+
+Set ~etcc-term-type-override~ to the appropriate terminal type.
+
+* Customization
+
+| Variable                | Default | Description                                                    |
+|-------------------------+---------+----------------------------------------------------------------|
+| ~etcc-use-color~        | ~nil~   | Whether to change cursor color (reads ~cursor-color~ frame parameter) |
+| ~etcc-use-blink~        | ~t~     | Whether to use blinking cursor sequences                       |
+| ~etcc-term-type-override~ | ~nil~ | Override terminal detection                                     |
+
+* License
+
+GPL v3 or later.
