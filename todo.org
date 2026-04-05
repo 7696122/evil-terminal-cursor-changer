@@ -9,7 +9,15 @@
   CLOSED: [2015-04-03 Fri 11:50]
 * DONE Add Kitty support
   CLOSED: [2022-05-14 Sat]
-* TODO Improve Gnome Terminal support
-  - Current implementation uses legacy gconftool-2 (GConf).
-  - Modern Gnome Terminal uses DConf/GSettings.
-  - Consider using DECSCUSR sequences instead of profile manipulation.
+* DONE Improve Gnome Terminal support
+  CLOSED: [2026-04-05 Sat]
+  - Switched from legacy gconftool-2 to standard DECSCUSR sequences.
+  - All terminals now use a unified DECSCUSR + OSC 12 code path.
+* DONE Add modern terminal support
+  CLOSED: [2026-04-05 Sat]
+  - Added: Alacritty, WezTerm, Windows Terminal, foot, Ghostty, Hyper, Rio, Tabby.
+* DONE Fix cursor color feature (etcc-use-color was dead code)
+  CLOSED: [2026-04-05 Sat]
+* DONE Unify escape sequences: remove Konsole/iTerm2 proprietary paths
+  CLOSED: [2026-04-05 Sat]
+  - All terminals use DECSCUSR for shape, OSC 12 for color.
