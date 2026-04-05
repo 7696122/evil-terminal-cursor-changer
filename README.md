@@ -1,7 +1,7 @@
 # evil-terminal-cursor-changer - Change cursor shape and color in terminal Emacs
 
 *Author:* 7696122<br>
-*Version:* 0.0.4<br>
+*Version:* 0.0.5<br>
 *URL:* [https://github.com/7696122/evil-terminal-cursor-changer](https://github.com/7696122/evil-terminal-cursor-changer)<br>
 
 [![MELPA](http://melpa.org/packages/evil-terminal-cursor-changer-badge.svg)](http://melpa.org/#/evil-terminal-cursor-changer)
@@ -55,15 +55,26 @@ escape sequence:
 
 ## Supported Terminals ##
 
-| Terminal | Detection | Notes |
-|---|---|---|
-| XTerm | `$XTERM_VERSION` | DECSCUSR sequences |
-| iTerm2 | `$TERM_PROGRAM = iTerm.app` | DECSCUSR + color |
-| Kitty | `$KITTY_PID` | DECSCUSR sequences |
-| Konsole | `$KONSOLE_PROFILE_NAME` | Custom sequences |
-| Apple Terminal | `$TERM_PROGRAM = Apple_Terminal` | DECSCUSR (requires MouseTerm Plus) |
-| Gnome Terminal | `$COLORTERM = gnome-terminal` | **Note:** uses legacy `gconftool-2` |
-| Dumb (mintty, etc.) | `$TERM = dumb` | DECSCUSR fallback |
+All terminals use standard DECSCUSR escape sequences for cursor shape,
+and OSC 12 for cursor color.
+
+| Terminal | Detection |
+|---|---|
+| XTerm | `$XTERM_VERSION` |
+| iTerm2 | `$TERM_PROGRAM = iTerm.app` |
+| Kitty | `$KITTY_PID` |
+| Konsole | `$KONSOLE_PROFILE_NAME` |
+| Apple Terminal | `$TERM_PROGRAM = Apple_Terminal` |
+| Gnome Terminal | `$COLORTERM` (gnome-terminal, kgx, terminator) |
+| Alacritty | `$TERM` starts with `alacritty` or `$ALACRITTY_WINDOW_ID` |
+| WezTerm | `$TERM_PROGRAM = WezTerm` |
+| Windows Terminal | `$WT_SESSION` |
+| foot | `$TERM` starts with `foot` |
+| Ghostty | `$TERM_PROGRAM = ghostty` |
+| Hyper | `$TERM_PROGRAM = Hyper` |
+| Rio | `$TERM_PROGRAM = Rio` |
+| Tabby | `$TERM_PROGRAM = Tabby` |
+| Dumb (mintty, etc.) | `$TERM = dumb` |
 
 If your terminal is not correctly detected, you can override the detection:
 
@@ -75,7 +86,7 @@ Set `etcc-term-type-override` to the appropriate terminal type.
 
 | Variable | Default | Description |
 |---|---|---|
-| `etcc-use-color` | `nil` | Whether to change cursor color |
+| `etcc-use-color` | `nil` | Whether to change cursor color (reads `cursor-color` frame parameter) |
 | `etcc-use-blink` | `t` | Whether to use blinking cursor sequences |
 
 ## License
