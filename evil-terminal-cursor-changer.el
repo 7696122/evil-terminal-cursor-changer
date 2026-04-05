@@ -197,7 +197,8 @@ Works with all modern terminals that support DECSCUSR."
   (when etcc-use-blink
     (add-hook 'blink-cursor-mode-hook #'etcc--set-cursor))
   (add-hook 'pre-command-hook  #'etcc--set-cursor)
-  (add-hook 'post-command-hook #'etcc--set-cursor))
+  (add-hook 'post-command-hook #'etcc--set-cursor)
+  (etcc--set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-on #'evil-terminal-cursor-changer-activate)
