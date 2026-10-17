@@ -108,6 +108,12 @@ Set ~evil-terminal-cursor-changer-term-type-override~ to the appropriate termina
 | ~evil-terminal-cursor-changer-use-blink~          | ~t~     | Whether to use blinking cursor sequences                              |
 | ~evil-terminal-cursor-changer-term-type-override~ | ~nil~   | Override terminal detection                                           |
 
+Changes made with ~setq~ or Customize take effect on the next cursor update.
+When color control is disabled, each terminal whose color this package changed
+receives OSC 112 once on its next update to restore its configured cursor color.
+For example, this restores Ghostty's ~cell-foreground~ behavior after a fixed
+color was sent.  Terminals not colored by this package are left unchanged.
+
 The former ~etcc-~ options now use the ~evil-terminal-cursor-changer-~ prefix.
 Update existing settings accordingly.  The ~etcc-on~ and ~etcc-off~ aliases
 have been removed; use ~evil-terminal-cursor-changer-activate~ and

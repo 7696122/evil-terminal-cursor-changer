@@ -22,11 +22,15 @@
             (terminal-parameter nil 'evil-terminal-cursor-changer--detection-cache))
            (color-cache
             (frame-parameter nil 'evil-terminal-cursor-changer--color-cache))
+           (original-color (frame-parameter nil 'cursor-color))
+           (color-active
+            (terminal-parameter nil 'evil-terminal-cursor-changer--color-active))
            sent)
        (unwind-protect
            (progn
              (set-terminal-parameter nil 'evil-terminal-cursor-changer--detection-cache nil)
              (set-frame-parameter nil 'evil-terminal-cursor-changer--color-cache nil)
+             (set-terminal-parameter nil 'evil-terminal-cursor-changer--color-active nil)
              (switch-to-buffer visible)
              (setq-local cursor-type 'bar)
              (with-current-buffer background
@@ -38,6 +42,9 @@
          (set-terminal-parameter nil 'evil-terminal-cursor-changer--detection-cache
                                  detection-cache)
          (set-frame-parameter nil 'evil-terminal-cursor-changer--color-cache color-cache)
+         (set-frame-parameter nil 'cursor-color original-color)
+         (set-terminal-parameter nil 'evil-terminal-cursor-changer--color-active
+                                 color-active)
          (kill-buffer visible)
          (kill-buffer background)))))
 
@@ -215,21 +222,70 @@
 
 (ert-deftest evil-terminal-cursor-changer-set-cursor-color-options ()
   "Color output is optional and independent of whether the cursor is hidden."
-  (evil-terminal-cursor-changer-test--with-visible-input
-    (dolist (case '((bar t "red" ("\e[6 q" "\e]12;#ffff00000000\a"))
-                    (nil t "red" ("\e]12;#ffff00000000\a"))
-                    (bar nil "red" ("\e[6 q"))
-                    (bar t nil ("\e[6 q"))
-                    (bar t "not-a-color" ("\e[6 q"))))
+  (dolist (case '((bar t "red" ("\e[6 q" "\e]12;#ffff00000000\a"))
+                  (nil t "red" ("\e]12;#ffff00000000\a"))
+                  (bar nil "red" ("\e[6 q"))
+                  (bar t nil ("\e[6 q"))
+                  (bar t "not-a-color" ("\e[6 q"))))
+    (evil-terminal-cursor-changer-test--with-visible-input
       (setq-local cursor-type (nth 0 case))
-      (let ((evil-terminal-cursor-changer-use-color (nth 1 case))
-            (color (nth 2 case)))
-        (setq sent nil)
-        (cl-letf (((symbol-function 'frame-parameter)
-                   (lambda (_frame param)
-                     (when (eq param 'cursor-color) color))))
-          (evil-terminal-cursor-changer--set-cursor))
+      (let ((evil-terminal-cursor-changer-use-color (nth 1 case)))
+        (set-frame-parameter nil 'cursor-color (nth 2 case))
+        (evil-terminal-cursor-changer--set-cursor)
         (should (equal (reverse sent) (nth 3 case)))))))
+
+(ert-deftest evil-terminal-cursor-changer-color-disable-restores-terminal-once ()
+  "Disabling color restores the terminal default once, including hidden cursors."
+  (evil-terminal-cursor-changer-test--with-visible-input
+    (set-frame-parameter nil 'cursor-color "#ff0000")
+    (setq evil-terminal-cursor-changer-use-color t)
+    (evil-terminal-cursor-changer-activate)
+    (should (equal (reverse sent) '("\e[6 q" "\e]12;#ffff00000000\a")))
+    (setq evil-terminal-cursor-changer-use-color nil
+          sent nil)
+    (run-hooks 'post-command-hook)
+    (should (equal (reverse sent) '("\e[6 q" "\e]112\a")))
+    (setq sent nil)
+    (run-hooks 'post-command-hook)
+    (should (equal sent '("\e[6 q")))
+    ;; Re-enabling must reuse the color without losing ownership of the reset.
+    (setq evil-terminal-cursor-changer-use-color t
+          sent nil)
+    (run-hooks 'post-command-hook)
+    (should (equal (reverse sent) '("\e[6 q" "\e]12;#ffff00000000\a")))
+    (setq-local cursor-type nil)
+    (setq evil-terminal-cursor-changer-use-color nil
+          sent nil)
+    (run-hook-with-args 'pre-redisplay-functions (selected-window))
+    (should (equal sent '("\e]112\a")))))
+
+(ert-deftest evil-terminal-cursor-changer-color-disable-preserves-unowned-color ()
+  "Never reset terminal colors if no valid color was sent by the package."
+  (dolist (color '(nil "not-a-color"))
+    (evil-terminal-cursor-changer-test--with-visible-input
+      (set-frame-parameter nil 'cursor-color color)
+      (setq evil-terminal-cursor-changer-use-color t)
+      (evil-terminal-cursor-changer-activate)
+      (setq evil-terminal-cursor-changer-use-color nil
+            sent nil)
+      (run-hooks 'post-command-hook)
+      (should (equal sent '("\e[6 q"))))))
+
+(ert-deftest evil-terminal-cursor-changer-color-disable-waits-for-selected-window ()
+  "Unrelated redisplay callbacks must not consume the pending color reset."
+  (evil-terminal-cursor-changer-test--with-visible-input
+    (let ((input-window (selected-window))
+          (other-window (split-window-right)))
+      (set-window-buffer other-window background)
+      (set-frame-parameter nil 'cursor-color "#ff0000")
+      (setq evil-terminal-cursor-changer-use-color t)
+      (evil-terminal-cursor-changer-activate)
+      (setq evil-terminal-cursor-changer-use-color nil
+            sent nil)
+      (run-hook-with-args 'pre-redisplay-functions other-window)
+      (should-not sent)
+      (run-hook-with-args 'pre-redisplay-functions input-window)
+      (should (equal (reverse sent) '("\e[6 q" "\e]112\a"))))))
 
 ;;; ------------------------------------------------------------------
 ;;; Visible-buffer cursor synchronization

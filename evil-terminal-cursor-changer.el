@@ -61,7 +61,9 @@
   :prefix "evil-terminal-cursor-changer-")
 
 (defcustom evil-terminal-cursor-changer-use-color nil
-  "Whether to change cursor color."
+  "Whether to change cursor color.
+When disabled, the next cursor update resets each terminal whose color
+this package changed to its configured default using OSC 112."
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
@@ -200,11 +202,17 @@ background buffer, so always read the selected window's buffer."
                       (if (consp cursor-type) (car cursor-type) cursor-type))))
             (when seq
               (send-string-to-terminal seq)))
-          (when evil-terminal-cursor-changer-use-color
-            (let ((seq (evil-terminal-cursor-changer--make-cursor-color-seq
-                        (frame-parameter nil 'cursor-color))))
-              (when seq
-                (send-string-to-terminal seq)))))))))
+          (if evil-terminal-cursor-changer-use-color
+              (let ((seq (evil-terminal-cursor-changer--make-cursor-color-seq
+                          (frame-parameter nil 'cursor-color))))
+                (when seq
+                  (send-string-to-terminal seq)
+                  (set-terminal-parameter
+                   nil 'evil-terminal-cursor-changer--color-active t)))
+            (when (terminal-parameter nil 'evil-terminal-cursor-changer--color-active)
+              (send-string-to-terminal "\e]112\a")
+              (set-terminal-parameter
+               nil 'evil-terminal-cursor-changer--color-active nil))))))))
 
 ;; ---- Public API ------------------------------------------------------
 
