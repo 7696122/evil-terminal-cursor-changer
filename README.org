@@ -9,6 +9,11 @@ Change cursor shape and color when running Emacs in a terminal.
 Reads the standard ~cursor-type~ variable and sends the appropriate
 escape sequences to your terminal emulator.
 
+Cursor updates use the selected window's buffer, even when a hook runs in
+an unrelated background buffer.  Updates also run before redisplay, so
+asynchronous output does not require another keypress to restore the cursor.
+~etcc-off~ removes the command, blink, and redisplay hooks.
+
 Works with any package that sets ~cursor-type~ -- evil-mode, meow,
 ryo-modal, and others -- or standalone.
 

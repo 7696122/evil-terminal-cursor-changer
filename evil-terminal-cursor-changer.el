@@ -177,17 +177,20 @@ Works with all modern terminals that support DECSCUSR."
 
 ;; ---- Main logic ------------------------------------------------------
 
-(defun etcc--set-cursor ()
-  "Set cursor shape and color based on `cursor-type'."
+(defun etcc--set-cursor (&optional _windows)
+  "Set the selected terminal's cursor from its selected window's buffer.
+The current buffer can be a background buffer during callbacks or reloads.
+WINDOWS is ignored; it is supplied by `pre-redisplay-functions'."
   (unless (display-graphic-p)
-    (let ((shape (if (listp cursor-type) (car cursor-type) cursor-type)))
-      ;; nil shape = hidden cursor: don't send shape sequence
-      (when shape
-        (etcc--apply-to-terminal (etcc--make-cursor-shape-seq shape))))
-    (when etcc-use-color
-      (let ((color (frame-parameter nil 'cursor-color)))
-        (when color
-          (etcc--apply-to-terminal (etcc--make-cursor-color-seq color)))))))
+    (with-current-buffer (window-buffer (selected-window))
+      (let ((shape (if (listp cursor-type) (car cursor-type) cursor-type)))
+        ;; nil shape = hidden cursor: don't send shape sequence
+        (when shape
+          (etcc--apply-to-terminal (etcc--make-cursor-shape-seq shape))))
+      (when etcc-use-color
+        (let ((color (frame-parameter nil 'cursor-color)))
+          (when color
+            (etcc--apply-to-terminal (etcc--make-cursor-color-seq color))))))))
 
 ;; ---- Public API ------------------------------------------------------
 
@@ -199,6 +202,8 @@ Works with all modern terminals that support DECSCUSR."
     (add-hook 'blink-cursor-mode-hook #'etcc--set-cursor))
   (add-hook 'pre-command-hook  #'etcc--set-cursor)
   (add-hook 'post-command-hook #'etcc--set-cursor)
+  ;; Async output can change the cursor without another user command.
+  (add-hook 'pre-redisplay-functions #'etcc--set-cursor)
   (etcc--set-cursor))
 
 ;;;###autoload
@@ -210,7 +215,8 @@ Works with all modern terminals that support DECSCUSR."
   (interactive)
   (remove-hook 'blink-cursor-mode-hook #'etcc--set-cursor)
   (remove-hook 'pre-command-hook  #'etcc--set-cursor)
-  (remove-hook 'post-command-hook #'etcc--set-cursor))
+  (remove-hook 'post-command-hook #'etcc--set-cursor)
+  (remove-hook 'pre-redisplay-functions #'etcc--set-cursor))
 
 ;;;###autoload
 (defalias 'etcc-off #'evil-terminal-cursor-changer-deactivate)
