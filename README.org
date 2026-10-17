@@ -12,12 +12,28 @@ escape sequences to your terminal emulator.
 Cursor updates use the selected window's buffer, even when a hook runs in
 an unrelated background buffer.  Updates also run before redisplay, so
 asynchronous output does not require another keypress to restore the cursor.
-~etcc-off~ removes the command, blink, and redisplay hooks.
+~evil-terminal-cursor-changer-deactivate~ removes the command, blink, and redisplay hooks.
+
+Activation synchronizes the cursor immediately; repeated activation does not
+duplicate updates.  Terminal detection is cached per terminal and refreshed
+when the process environment changes or the detector table is replaced.
+Color conversion is cached per frame while the color is unchanged.
+Reactivation refreshes the selected terminal's detection and frame's color.
+
+On Emacs versions that supply individual windows to redisplay callbacks,
+only the selected window triggers cursor output.  Cursor sequences are still
+resent on every selected-window update, even when their calculation was
+cached, since other terminal output can change the physical cursor.
+Graphical frames receive no terminal escape sequences.  A hidden cursor
+(~cursor-type~ set to ~nil~) skips shape output without disabling optional color
+updates; absent or invalid colors are ignored.
 
 Works with any package that sets ~cursor-type~ -- evil-mode, meow,
 ryo-modal, and others -- or standalone.
 
 * Install
+
+Requires Emacs 25.1 or later for ~pre-redisplay-functions~.
 
 1. Configure MELPA: http://melpa.org/#/getting-started
 2. ~M-x package-install RET evil-terminal-cursor-changer RET~
@@ -26,7 +42,7 @@ ryo-modal, and others -- or standalone.
 #+BEGIN_SRC elisp
   (unless (display-graphic-p)
     (require 'evil-terminal-cursor-changer)
-    (etcc-on))
+    (evil-terminal-cursor-changer-activate))
 #+END_SRC
 
 * With evil-mode
@@ -58,37 +74,44 @@ terminal escape sequence:
 All terminals use standard DECSCUSR sequences for cursor shape
 and OSC 12 for cursor color.
 
-| Terminal          | Detection method                            |
-|-------------------+---------------------------------------------|
-| XTerm             | ~$XTERM_VERSION~                            |
-| iTerm2            | ~$TERM_PROGRAM = iTerm.app~                 |
-| Kitty             | ~$KITTY_PID~                                |
-| Konsole           | ~$KONSOLE_PROFILE_NAME~                     |
-| Apple Terminal    | ~$TERM_PROGRAM = Apple_Terminal~            |
+Environment-variable presence checks require a non-empty value.
+
+| Terminal          | Detection method                                          |
+|-------------------+-----------------------------------------------------------|
+| XTerm             | ~$XTERM_VERSION~                                          |
+| iTerm2            | ~$TERM_PROGRAM = iTerm.app~                               |
+| Kitty             | ~$KITTY_PID~                                              |
+| Konsole           | ~$KONSOLE_PROFILE_NAME~                                   |
+| Apple Terminal    | ~$TERM_PROGRAM = Apple_Terminal~                          |
 | Alacritty         | ~$TERM~ starts with ~alacritty~ or ~$ALACRITTY_WINDOW_ID~ |
-| WezTerm           | ~$TERM_PROGRAM = WezTerm~                   |
-| Windows Terminal  | ~$WT_SESSION~                               |
-| foot              | ~$TERM~ starts with ~foot~                  |
-| Ghostty           | ~$TERM_PROGRAM = ghostty~ or ~$GHOSTTY_BIN_DIR~ |
-| Hyper             | ~$TERM_PROGRAM = Hyper~                     |
-| Rio               | ~$TERM_PROGRAM = Rio~                       |
-| Tabby             | ~$TERM_PROGRAM = Tabby~                     |
-| Gnome Terminal    | ~$COLORTERM~ (gnome-terminal, kgx, terminator) |
-| Dumb (mintty etc) | ~$TERM = dumb~                              |
+| WezTerm           | ~$TERM_PROGRAM = WezTerm~                                 |
+| Windows Terminal  | ~$WT_SESSION~                                             |
+| foot              | ~$TERM~ starts with ~foot~                                |
+| Ghostty           | ~$TERM_PROGRAM = ghostty~ or ~$GHOSTTY_BIN_DIR~           |
+| Hyper             | ~$TERM_PROGRAM = Hyper~                                   |
+| Rio               | ~$TERM_PROGRAM = Rio~                                     |
+| Tabby             | ~$TERM_PROGRAM = Tabby~                                   |
+| Gnome Terminal    | ~$COLORTERM~ (gnome-terminal, kgx, terminator)            |
+| Dumb (mintty etc) | ~$TERM = dumb~                                            |
 
 If your terminal is not correctly detected, override it:
 
 ~M-x customize-group RET evil-terminal-cursor-changer RET~
 
-Set ~etcc-term-type-override~ to the appropriate terminal type.
+Set ~evil-terminal-cursor-changer-term-type-override~ to the appropriate terminal type.
 
 * Customization
 
-| Variable                | Default | Description                                                    |
-|-------------------------+---------+----------------------------------------------------------------|
-| ~etcc-use-color~        | ~nil~   | Whether to change cursor color (reads ~cursor-color~ frame parameter) |
-| ~etcc-use-blink~        | ~t~     | Whether to use blinking cursor sequences                       |
-| ~etcc-term-type-override~ | ~nil~ | Override terminal detection                                     |
+| Variable                                          | Default | Description                                                           |
+|---------------------------------------------------+---------+-----------------------------------------------------------------------|
+| ~evil-terminal-cursor-changer-use-color~          | ~nil~   | Whether to change cursor color (reads ~cursor-color~ frame parameter) |
+| ~evil-terminal-cursor-changer-use-blink~          | ~t~     | Whether to use blinking cursor sequences                              |
+| ~evil-terminal-cursor-changer-term-type-override~ | ~nil~   | Override terminal detection                                           |
+
+The former ~etcc-~ options now use the ~evil-terminal-cursor-changer-~ prefix.
+Update existing settings accordingly.  The ~etcc-on~ and ~etcc-off~ aliases
+have been removed; use ~evil-terminal-cursor-changer-activate~ and
+~evil-terminal-cursor-changer-deactivate~ instead.
 
 * License
 

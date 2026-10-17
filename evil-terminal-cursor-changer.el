@@ -6,9 +6,9 @@
 ;; Maintainer: 7696122
 ;; Created: Sat Nov  2 12:17:13 2013 (+0900)
 ;; Version: 0.0.5
-;; Package-Requires: ()
+;; Package-Requires: ((emacs "25.1"))
 ;; URL: https://github.com/7696122/evil-terminal-cursor-changer
-;; Keywords: terminal, cursor, evil
+;; Keywords: terminals, faces
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -35,7 +35,7 @@
 ;;
 ;;   (unless (display-graphic-p)
 ;;     (require 'evil-terminal-cursor-changer)
-;;     (etcc-on))
+;;     (evil-terminal-cursor-changer-activate))
 ;;
 ;; With evil-mode, it works out of the box since evil sets `cursor-type'
 ;; per state.  Without evil, just set `cursor-type' directly:
@@ -58,19 +58,19 @@
 (defgroup evil-terminal-cursor-changer nil
   "Change cursor shape and color in terminal Emacs."
   :group 'cursor
-  :prefix "etcc-")
+  :prefix "evil-terminal-cursor-changer-")
 
-(defcustom etcc-use-color nil
+(defcustom evil-terminal-cursor-changer-use-color nil
   "Whether to change cursor color."
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
-(defcustom etcc-use-blink t
+(defcustom evil-terminal-cursor-changer-use-blink t
   "Whether to use blinking cursor sequences."
   :type 'boolean
   :group 'evil-terminal-cursor-changer)
 
-(defcustom etcc-term-type-override nil
+(defcustom evil-terminal-cursor-changer-term-type-override nil
   "Override automatic terminal detection.
 
 Set this if your terminal is not correctly detected but you know
@@ -95,131 +95,142 @@ which escape sequences it supports."
 
 ;; ---- Terminal detection ----------------------------------------------
 
-(defun etcc--detect-by-term-program (name)
+(defun evil-terminal-cursor-changer--detect-by-term-program (name)
   "Return non-nil if `TERM_PROGRAM' equals NAME."
   (string= (getenv "TERM_PROGRAM") name))
 
-(defun etcc--detect-by-env (var)
+(defun evil-terminal-cursor-changer--detect-by-env (var)
   "Return non-nil if environment variable VAR is set and non-empty."
-  (not (memq (getenv var) '(nil ""))))
+  (let ((value (getenv var)))
+    (and value (not (equal value "")))))
 
-(defun etcc--detect-by-term-prefix (prefix)
+(defun evil-terminal-cursor-changer--detect-by-term-prefix (prefix)
   "Return non-nil if `TERM' starts with PREFIX."
   (let ((term (getenv "TERM")))
     (and term (string-prefix-p prefix term))))
 
-(defvar etcc--term-detectors
-  `((xterm     . ,(lambda () (etcc--detect-by-env "XTERM_VERSION")))
-    (iterm     . ,(lambda () (etcc--detect-by-term-program "iTerm.app")))
-    (kitty     . ,(lambda () (etcc--detect-by-env "KITTY_PID")))
-    (konsole   . ,(lambda () (etcc--detect-by-env "KONSOLE_PROFILE_NAME")))
-    (apple     . ,(lambda () (etcc--detect-by-term-program "Apple_Terminal")))
-    (alacritty . ,(lambda () (or (etcc--detect-by-term-prefix "alacritty")
-                                 (etcc--detect-by-env "ALACRITTY_WINDOW_ID"))))
-    (wezterm   . ,(lambda () (etcc--detect-by-term-program "WezTerm")))
-    (wterm     . ,(lambda () (etcc--detect-by-env "WT_SESSION")))
-    (foot      . ,(lambda () (etcc--detect-by-term-prefix "foot")))
-    (ghostty   . ,(lambda () (or (etcc--detect-by-term-program "ghostty")
-                                 (etcc--detect-by-env "GHOSTTY_BIN_DIR"))))
-    (hyper     . ,(lambda () (etcc--detect-by-term-program "Hyper")))
-    (rio       . ,(lambda () (etcc--detect-by-term-program "Rio")))
-    (tabby     . ,(lambda () (etcc--detect-by-term-program "Tabby")))
+(defvar evil-terminal-cursor-changer--term-detectors
+  `((xterm     . ,(lambda () (evil-terminal-cursor-changer--detect-by-env "XTERM_VERSION")))
+    (iterm     . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "iTerm.app")))
+    (kitty     . ,(lambda () (evil-terminal-cursor-changer--detect-by-env "KITTY_PID")))
+    (konsole   . ,(lambda () (evil-terminal-cursor-changer--detect-by-env "KONSOLE_PROFILE_NAME")))
+    (apple     . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "Apple_Terminal")))
+    (alacritty . ,(lambda () (or (evil-terminal-cursor-changer--detect-by-term-prefix "alacritty")
+                                 (evil-terminal-cursor-changer--detect-by-env "ALACRITTY_WINDOW_ID"))))
+    (wezterm   . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "WezTerm")))
+    (wterm     . ,(lambda () (evil-terminal-cursor-changer--detect-by-env "WT_SESSION")))
+    (foot      . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-prefix "foot")))
+    (ghostty   . ,(lambda () (or (evil-terminal-cursor-changer--detect-by-term-program "ghostty")
+                                 (evil-terminal-cursor-changer--detect-by-env "GHOSTTY_BIN_DIR"))))
+    (hyper     . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "Hyper")))
+    (rio       . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "Rio")))
+    (tabby     . ,(lambda () (evil-terminal-cursor-changer--detect-by-term-program "Tabby")))
     (gnome     . ,(lambda () (let ((ct (getenv "COLORTERM")))
                                (and ct (string-match-p "gnome-terminal\\|kgx\\|terminator" ct)))))
     (dumb      . ,(lambda () (string= (getenv "TERM") "dumb"))))
   "Alist of (TYPE . DETECT-FN) for terminal detection.")
 
-(defun etcc--detect-terminal ()
-  "Return detected terminal type as a symbol, or nil."
-  (or etcc-term-type-override
-      (cl-loop for (type . detect) in etcc--term-detectors
-               when (funcall detect) return type)))
+(defun evil-terminal-cursor-changer--detect-terminal ()
+  "Return the detected terminal type, or nil.
+Cache the environment snapshot, detector table, and result on the terminal.
+An explicit override always takes precedence over the cached detection."
+  (or evil-terminal-cursor-changer-term-type-override
+      (let ((cache (terminal-parameter
+                    nil 'evil-terminal-cursor-changer--detection-cache)))
+        (if (and cache
+                 (equal process-environment (aref cache 0))
+                 (eq evil-terminal-cursor-changer--term-detectors (aref cache 1)))
+            (aref cache 2)
+          (let ((type
+                 (cl-loop for (type . detect) in evil-terminal-cursor-changer--term-detectors
+                          when (funcall detect) return type)))
+            (set-terminal-parameter
+             nil 'evil-terminal-cursor-changer--detection-cache
+             (vector (mapcar #'copy-sequence process-environment)
+                     evil-terminal-cursor-changer--term-detectors type))
+            type)))))
 
 ;; ---- Escape sequences: shape (DECSCUSR) ------------------------------
 
-(defconst etcc--decscusr-codes
+(defconst evil-terminal-cursor-changer--decscusr-codes
   '((box  . ((nil . "2") (t . "1")))
     (bar  . ((nil . "6") (t . "5")))
     (hbar . ((nil . "4") (t . "3"))))
   "DECSCUSR shape codes: ((BLINK . CODE) ...).")
 
-(defun etcc--make-cursor-shape-seq (shape)
+(defun evil-terminal-cursor-changer--make-cursor-shape-seq (shape)
   "Return DECSCUSR escape sequence for SHAPE on the current terminal.
 Returns nil if terminal is undetected or SHAPE is nil (hidden cursor)."
-  (when (and shape (etcc--detect-terminal))
-    (let* ((entry (or (assq shape etcc--decscusr-codes)
-                      (assq 'box etcc--decscusr-codes)))
+  (when (and shape (evil-terminal-cursor-changer--detect-terminal))
+    (let* ((entry (or (assq shape evil-terminal-cursor-changer--decscusr-codes)
+                      (assq 'box evil-terminal-cursor-changer--decscusr-codes)))
            (codes (cdr entry))
-           (code  (cdr (assq (and etcc-use-blink blink-cursor-mode) codes))))
+           (code  (cdr (assq (and evil-terminal-cursor-changer-use-blink blink-cursor-mode) codes))))
       (concat "\e[" code " q"))))
 
 ;; ---- Escape sequences: color (OSC 12) --------------------------------
 
-(defun etcc--color-name-to-hex (color)
-  "Convert COLOR name to hex string, or nil if invalid."
-  (let ((rgb (color-name-to-rgb color)))
-    (when rgb
-      (apply #'color-rgb-to-hex rgb))))
-
-(defun etcc--make-cursor-color-seq (color)
-  "Return OSC 12 escape sequence to set cursor COLOR.
-Works with all modern terminals that support DECSCUSR."
-  (let ((hex (etcc--color-name-to-hex color)))
-    (when hex
-      (concat "\e]12;" hex "\a"))))
-
-;; ---- Apply to terminal -----------------------------------------------
-
-(defun etcc--apply-to-terminal (seq)
-  "Send escape sequence SEQ to the terminal."
-  (when (and seq (stringp seq) (not (display-graphic-p)))
-    (send-string-to-terminal seq)))
+(defun evil-terminal-cursor-changer--make-cursor-color-seq (color)
+  "Return OSC 12 escape sequence for COLOR, or nil if absent or invalid.
+Cache the last color and its sequence on the selected frame."
+  (when color
+    (let ((cache (frame-parameter
+                  nil 'evil-terminal-cursor-changer--color-cache)))
+      (if (and cache (equal color (aref cache 0)))
+          (aref cache 1)
+        (let* ((rgb (color-name-to-rgb color))
+               (seq (when rgb
+                      (concat "\e]12;" (apply #'color-rgb-to-hex rgb) "\a"))))
+          (set-frame-parameter nil 'evil-terminal-cursor-changer--color-cache
+                               (vector (copy-sequence color) seq))
+          seq)))))
 
 ;; ---- Main logic ------------------------------------------------------
 
-(defun etcc--set-cursor (&optional _windows)
+(defun evil-terminal-cursor-changer--set-cursor (&optional window)
   "Set the selected terminal's cursor from its selected window's buffer.
-The current buffer can be a background buffer during callbacks or reloads.
-WINDOWS is ignored; it is supplied by `pre-redisplay-functions'."
+Ignore redisplay calls for a nonselected WINDOW.  Non-window arguments
+from older Emacs versions are accepted.  The current buffer may be a
+background buffer, so always read the selected window's buffer."
   (unless (display-graphic-p)
-    (with-current-buffer (window-buffer (selected-window))
-      (let ((shape (if (listp cursor-type) (car cursor-type) cursor-type)))
-        ;; nil shape = hidden cursor: don't send shape sequence
-        (when shape
-          (etcc--apply-to-terminal (etcc--make-cursor-shape-seq shape))))
-      (when etcc-use-color
-        (let ((color (frame-parameter nil 'cursor-color)))
-          (when color
-            (etcc--apply-to-terminal (etcc--make-cursor-color-seq color))))))))
+    (let ((selected (selected-window)))
+      (when (or (not (windowp window)) (eq window selected))
+        (with-current-buffer (window-buffer selected)
+          (let ((seq (evil-terminal-cursor-changer--make-cursor-shape-seq
+                      (if (consp cursor-type) (car cursor-type) cursor-type))))
+            (when seq
+              (send-string-to-terminal seq)))
+          (when evil-terminal-cursor-changer-use-color
+            (let ((seq (evil-terminal-cursor-changer--make-cursor-color-seq
+                        (frame-parameter nil 'cursor-color))))
+              (when seq
+                (send-string-to-terminal seq)))))))))
 
 ;; ---- Public API ------------------------------------------------------
 
-;;;###autoload
-(defun evil-terminal-cursor-changer-activate ()
-  "Enable terminal cursor changer."
-  (interactive)
-  (when etcc-use-blink
-    (add-hook 'blink-cursor-mode-hook #'etcc--set-cursor))
-  (add-hook 'pre-command-hook  #'etcc--set-cursor)
-  (add-hook 'post-command-hook #'etcc--set-cursor)
-  ;; Async output can change the cursor without another user command.
-  (add-hook 'pre-redisplay-functions #'etcc--set-cursor)
-  (etcc--set-cursor))
+(defconst evil-terminal-cursor-changer--cursor-hooks
+  '(pre-command-hook post-command-hook pre-redisplay-functions)
+  "Hooks that synchronize the cursor during commands and redisplay.")
 
 ;;;###autoload
-(defalias 'etcc-on #'evil-terminal-cursor-changer-activate)
+(defun evil-terminal-cursor-changer-activate ()
+  "Enable terminal cursor changer and refresh the selected display's caches."
+  (interactive)
+  (set-terminal-parameter nil 'evil-terminal-cursor-changer--detection-cache nil)
+  (set-frame-parameter nil 'evil-terminal-cursor-changer--color-cache nil)
+  (when evil-terminal-cursor-changer-use-blink
+    (add-hook 'blink-cursor-mode-hook #'evil-terminal-cursor-changer--set-cursor))
+  (dolist (hook evil-terminal-cursor-changer--cursor-hooks)
+    (add-hook hook #'evil-terminal-cursor-changer--set-cursor))
+  (evil-terminal-cursor-changer--set-cursor))
 
 ;;;###autoload
 (defun evil-terminal-cursor-changer-deactivate ()
   "Disable terminal cursor changer."
   (interactive)
-  (remove-hook 'blink-cursor-mode-hook #'etcc--set-cursor)
-  (remove-hook 'pre-command-hook  #'etcc--set-cursor)
-  (remove-hook 'post-command-hook #'etcc--set-cursor)
-  (remove-hook 'pre-redisplay-functions #'etcc--set-cursor))
-
-;;;###autoload
-(defalias 'etcc-off #'evil-terminal-cursor-changer-deactivate)
+  (remove-hook 'blink-cursor-mode-hook #'evil-terminal-cursor-changer--set-cursor)
+  (dolist (hook evil-terminal-cursor-changer--cursor-hooks)
+    (remove-hook hook #'evil-terminal-cursor-changer--set-cursor)))
 
 (provide 'evil-terminal-cursor-changer)
 ;;; evil-terminal-cursor-changer.el ends here
